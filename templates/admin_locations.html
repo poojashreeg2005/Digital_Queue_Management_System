@@ -1,0 +1,278 @@
+
+{% extends "base.html" %}
+
+{% block title %}Department Management | QueueFlow AI{% endblock %}
+
+{% block content %}
+
+<style>
+    .management {
+        max-width: 1250px;
+        margin: auto;
+        padding: 35px 22px;
+    }
+
+    .management-header {
+        background: linear-gradient(120deg, #302875, #6653df, #9278ef);
+        color: white;
+        padding: 30px;
+        border-radius: 20px;
+        margin-bottom: 28px;
+    }
+
+    .management-header h1 {
+        margin: 0 0 8px;
+    }
+
+    .management-header p {
+        margin: 0;
+        opacity: .9;
+    }
+
+    .management-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 22px;
+        align-items: start;
+    }
+
+    .management-card {
+        background: white;
+        padding: 24px;
+        border-radius: 17px;
+        box-shadow: 0 5px 22px rgba(30, 30, 70, .08);
+        margin-bottom: 22px;
+    }
+
+    .management-card h2 {
+        color: #302875;
+        font-size: 20px;
+        margin-top: 0;
+    }
+
+    .management-card label {
+        display: block;
+        font-weight: 600;
+        margin: 13px 0 6px;
+        color: #39364f;
+    }
+
+    .management-card input,
+    .management-card select,
+    .management-card textarea {
+        width: 100%;
+        padding: 11px;
+        border: 1px solid #dedced;
+        border-radius: 9px;
+        box-sizing: border-box;
+        font: inherit;
+    }
+
+    .management-card textarea {
+        min-height: 75px;
+        resize: vertical;
+    }
+
+    .management-card button {
+        width: 100%;
+        margin-top: 17px;
+        padding: 12px;
+        border: 0;
+        border-radius: 9px;
+        color: white;
+        background: #6653df;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .management-card button:hover {
+        background: #4938b5;
+    }
+
+    .record-card {
+        border: 1px solid #e8e5f4;
+        padding: 17px;
+        border-radius: 12px;
+        margin-top: 15px;
+        background: #fcfbff;
+    }
+
+    .record-card h3 {
+        color: #302875;
+        margin: 0 0 12px;
+    }
+
+    .section-heading {
+        margin: 35px 0 15px;
+        color: #302875;
+    }
+
+    .back-link {
+        display: inline-block;
+        margin-bottom: 18px;
+        color: #6653df;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    @media(max-width: 600px) {
+        .management {
+            padding: 20px 12px;
+        }
+        .management-header {
+            padding: 22px;
+        }
+    }
+</style>
+
+<div class="management">
+
+    <a class="back-link" href="{{ url_for('admin.dashboard') }}">
+        ← Back to Admin Dashboard
+    </a>
+
+    <div class="management-header">
+        <h1>Department & Counter Management</h1>
+        <p>Manage campus departments, service counters and contact information.</p>
+    </div>
+
+    <h2 class="section-heading">Department Details</h2>
+
+    <div class="management-grid">
+
+        {% for department in departments %}
+        <div class="management-card">
+
+            <h2>{{ department.name }}</h2>
+
+            <form method="POST"
+                  action="{{ url_for('admin.update_department', department_id=department.id) }}">
+
+                <label>Department Name</label>
+                <input type="text" name="name"
+                       value="{{ department.name }}" required>
+
+                <label>Building</label>
+                <input type="text" name="building"
+                       value="{{ department.building or '' }}">
+
+                <label>Floor</label>
+                <input type="text" name="floor"
+                       value="{{ department.floor or '' }}">
+
+                <label>Contact Person</label>
+                <input type="text" name="contact_person"
+                       value="{{ department.contact_person or '' }}">
+
+                <label>Contact Phone</label>
+                <input type="tel" name="contact_phone"
+                       value="{{ department.contact_phone or '' }}">
+
+                <label>Contact Email</label>
+                <input type="email" name="contact_email"
+                       value="{{ department.contact_email or '' }}">
+
+                <label>Daily Token Limit</label>
+                <input type="number" name="daily_limit" min="1"
+                       value="{{ department.daily_limit or 100 }}" required>
+
+                <button type="submit">Save Department Details</button>
+            </form>
+
+        </div>
+        {% endfor %}
+
+    </div>
+
+    <h2 class="section-heading">Add a New Counter</h2>
+
+    <div class="management-card">
+
+        <form method="POST" action="{{ url_for('admin.create_counter') }}">
+
+            <label>Select Department</label>
+            <select name="department_id" required>
+                <option value="">Choose Department</option>
+                {% for department in departments %}
+                <option value="{{ department.id }}">{{ department.name }}</option>
+                {% endfor %}
+            </select>
+
+            <label>Counter Name</label>
+            <input type="text" name="name"
+                   placeholder="Example: Student Service Counter 2" required>
+
+            <label>Building</label>
+            <input type="text" name="building" placeholder="Building name">
+
+            <label>Floor</label>
+            <input type="text" name="floor" placeholder="Example: Ground Floor">
+
+            <label>Room / Counter Number</label>
+            <input type="text" name="room" placeholder="Example: Room 105">
+
+            <label>Directions</label>
+            <textarea name="directions"
+                      placeholder="Example: Enter through the main gate, turn left and proceed to Room 105."></textarea>
+
+            <button type="submit">Add Counter</button>
+
+        </form>
+
+    </div>
+
+    <h2 class="section-heading">Existing Counters</h2>
+
+    <div class="management-grid">
+
+        {% for counter in counters %}
+        <div class="management-card">
+
+            <h2>{{ counter.name }}</h2>
+
+            <form method="POST"
+                  action="{{ url_for('admin.update_counter', counter_id=counter.id) }}">
+
+                <label>Department</label>
+                <select name="department_id" required>
+                    {% for department in departments %}
+                    <option value="{{ department.id }}"
+                        {% if department.id == counter.department_id %}selected{% endif %}>
+                        {{ department.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+
+                <label>Counter Name</label>
+                <input type="text" name="name"
+                       value="{{ counter.name }}" required>
+
+                <label>Building</label>
+                <input type="text" name="building"
+                       value="{{ counter.building or '' }}">
+
+                <label>Floor</label>
+                <input type="text" name="floor"
+                       value="{{ counter.floor or '' }}">
+
+                <label>Room / Counter Number</label>
+                <input type="text" name="room"
+                       value="{{ counter.room or '' }}">
+
+                <label>Directions</label>
+                <textarea name="directions">{{ counter.directions or '' }}</textarea>
+
+                <button type="submit">Update Counter</button>
+
+            </form>
+
+        </div>
+        {% else %}
+        <p>No counters have been added yet.</p>
+        {% endfor %}
+
+    </div>
+
+</div>
+
+{% endblock %}

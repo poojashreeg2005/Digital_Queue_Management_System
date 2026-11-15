@@ -1,0 +1,1998 @@
+
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard | QueueFlow AI{% endblock %}
+
+{% block content %}
+
+<style>
+    :root {
+        --purple: #7657f6;
+        --purple-dark: #6042df;
+        --purple-light: #f0edff;
+        --navy: #17172f;
+        --text: #25243a;
+        --muted: #85849b;
+        --border: #eeedf5;
+        --surface: #ffffff;
+    }
+
+    body {
+        background: #f7f7fb;
+    }
+
+    /* MAIN LAYOUT */
+
+    .dashboard {
+        width: 100%;
+        max-width: 1500px;
+        margin: auto;
+        padding: 28px;
+        display: grid;
+        grid-template-columns: 245px minmax(0, 1fr);
+        gap: 27px;
+        align-items: start;
+    }
+
+    /* SIDEBAR */
+
+    .sidebar {
+        background: var(--navy);
+        color: white;
+        min-height: calc(100vh - 130px);
+        border-radius: 22px;
+        padding: 25px 17px;
+        position: sticky;
+        top: 95px;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 15px 35px #17172f1a;
+    }
+
+    .sidebar-brand {
+        padding: 8px 12px 27px;
+        border-bottom: 1px solid #ffffff18;
+    }
+
+    .sidebar-brand h2 {
+        font-size: 21px;
+        font-weight: 800;
+        letter-spacing: -0.7px;
+    }
+
+    .sidebar-brand h2 span {
+        color: #a995ff;
+    }
+
+    .sidebar-brand p {
+        color: #9998b7;
+        font-size: 11px;
+        margin-top: 6px;
+        letter-spacing: 1px;
+    }
+
+    .sidebar-label {
+        color: #8584a5;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 1.5px;
+        padding: 25px 12px 11px;
+    }
+
+    .sidebar-nav {
+        display: grid;
+        gap: 7px;
+    }
+
+    .sidebar-nav a {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 13px 12px;
+        color: #b7b6cc;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 600;
+        transition: 0.2s;
+    }
+
+    .sidebar-nav a:hover,
+    .sidebar-nav a.active {
+        background: linear-gradient(110deg, #7657f6, #9278f8);
+        color: white;
+        box-shadow: 0 6px 15px #7657f633;
+    }
+
+    .sidebar-icon {
+        font-size: 17px;
+        width: 22px;
+        text-align: center;
+    }
+
+    .sidebar-bottom {
+        margin-top: auto;
+        padding-top: 25px;
+    }
+
+    .sidebar-user {
+        padding: 15px 10px;
+        background: #ffffff0c;
+        border: 1px solid #ffffff15;
+        border-radius: 12px;
+        margin-bottom: 12px;
+        overflow-wrap: anywhere;
+    }
+
+    .sidebar-user strong {
+        display: block;
+        font-size: 13px;
+        color: white;
+    }
+
+    .sidebar-user small {
+        display: block;
+        color: #a6a5bd;
+        font-size: 11px;
+        margin-top: 5px;
+    }
+
+    .sidebar-logout {
+        display: block;
+        text-align: center;
+        padding: 11px;
+        color: #ffb4bd;
+        background: #ff657515;
+        border-radius: 9px;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .sidebar-logout:hover {
+        background: #ff65752c;
+    }
+
+    /* MAIN CONTENT */
+
+    .dashboard-main {
+        min-width: 0;
+    }
+
+    .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+
+    .topbar h1 {
+        font-size: 25px;
+        color: #22213a;
+        letter-spacing: -0.8px;
+    }
+
+    .topbar p {
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 5px;
+    }
+
+    .live-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #16865a;
+        background: #eaf8f0;
+        border: 1px solid #d7f0e2;
+        padding: 9px 13px;
+        border-radius: 30px;
+        font-size: 11px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .live-dot {
+        width: 8px;
+        height: 8px;
+        background: #22a06b;
+        border-radius: 50%;
+        animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: .3; }
+    }
+
+    /* WELCOME */
+
+    .welcome {
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(115deg, #30245f, #5942b5 60%, #8065ed);
+        padding: 34px;
+        border-radius: 20px;
+        color: white;
+        margin-bottom: 25px;
+        box-shadow: 0 12px 28px #5546d92a;
+    }
+
+    .welcome::after {
+        content: "";
+        position: absolute;
+        width: 260px;
+        height: 260px;
+        border-radius: 50%;
+        border: 1px solid #ffffff25;
+        right: -75px;
+        top: -115px;
+        box-shadow: 0 0 0 30px #ffffff08, 0 0 0 60px #ffffff06;
+    }
+
+    .welcome-content {
+        position: relative;
+        z-index: 1;
+        max-width: 620px;
+    }
+
+    .welcome-tag {
+        color: #d7cdff;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 2px;
+    }
+
+    .welcome h2 {
+        font-size: 29px;
+        margin: 12px 0;
+        letter-spacing: -0.8px;
+    }
+
+    .welcome p {
+        color: #e5dfff;
+        font-size: 13px;
+        line-height: 1.8;
+        max-width: 530px;
+    }
+
+    .welcome-button {
+        display: inline-block;
+        background: white;
+        color: #5942bd;
+        padding: 12px 19px;
+        border-radius: 9px;
+        margin-top: 20px;
+        font-size: 12px;
+        font-weight: 800;
+        transition: .2s;
+    }
+
+    .welcome-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px #17172f35;
+    }
+
+    /* STATISTICS */
+
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 15px;
+        margin-bottom: 32px;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 19px;
+        border: 1px solid var(--border);
+        border-radius: 15px;
+        box-shadow: 0 4px 15px #25243a06;
+        transition: .2s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 9px 23px #25243a0c;
+    }
+
+    .stat-icon {
+        width: 37px;
+        height: 37px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 11px;
+        font-size: 18px;
+        margin-bottom: 15px;
+    }
+
+    .icon-purple { background: #f0edff; }
+    .icon-blue { background: #eaf3ff; }
+    .icon-green { background: #e9f8ef; }
+    .icon-orange { background: #fff3e5; }
+
+    .stat-card small {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .stat-card h2 {
+        font-size: 27px;
+        margin-top: 7px;
+        color: #282642;
+    }
+
+    /* SECTION HEADINGS */
+
+    .section-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        margin: 32px 0 17px;
+        gap: 12px;
+    }
+
+    .section-heading h2 {
+        font-size: 19px;
+        color: #27263f;
+        letter-spacing: -.4px;
+    }
+
+    .section-subtitle {
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 5px;
+    }
+
+    .book-main-btn {
+        background: var(--purple);
+        color: white;
+        padding: 11px 17px;
+        border-radius: 9px;
+        font-size: 12px;
+        font-weight: 800;
+        transition: .2s;
+        box-shadow: 0 5px 14px #7657f62b;
+    }
+
+    .book-main-btn:hover {
+        background: var(--purple-dark);
+        transform: translateY(-2px);
+    }
+
+    /* SERVICES */
+
+    .service-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 15px;
+    }
+
+    .service-card {
+        background: white;
+        padding: 21px;
+        border: 1px solid var(--border);
+        border-radius: 15px;
+        transition: .22s;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .service-card:hover {
+        transform: translateY(-4px);
+        border-color: #d9d0ff;
+        box-shadow: 0 12px 25px #30245f12;
+    }
+
+    .service-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 13px;
+        background: linear-gradient(135deg, #eeeaff, #f7f4ff);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        margin-bottom: 15px;
+    }
+
+    .service-card h3 {
+        color: #292742;
+        font-size: 15px;
+        margin-bottom: 8px;
+    }
+
+    .service-card p {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.7;
+        overflow-wrap: anywhere;
+    }
+
+    .service-meta {
+        color: var(--purple);
+        font-weight: 800;
+        font-size: 11px;
+        margin-top: 13px;
+    }
+
+    .service-book-btn {
+        display: inline-block;
+        margin-top: auto;
+        padding: 10px 12px;
+        background: var(--purple-light);
+        color: var(--purple-dark);
+        border-radius: 8px;
+        font-weight: 800;
+        font-size: 11px;
+        text-align: center;
+        transition: .2s;
+    }
+
+    .service-book-btn:hover {
+        background: #e2dcff;
+    }
+
+    .service-card .service-book-btn {
+        margin-top: 17px;
+    }
+
+    /* TOKEN CARDS */
+
+    .token-list {
+        display: grid;
+        gap: 15px;
+    }
+
+    .token-card {
+        background: white;
+        padding: 22px;
+        border: 1px solid var(--border);
+        border-radius: 15px;
+        box-shadow: 0 4px 15px #25243a06;
+        transition: .2s;
+    }
+
+    .token-card:hover {
+        border-color: #ded8ff;
+        box-shadow: 0 8px 23px #30245f0c;
+    }
+
+    .token-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .token-card h3 {
+        color: #292742;
+        font-size: 17px;
+        margin-bottom: 7px;
+    }
+
+    .token-card p {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.8;
+        overflow-wrap: anywhere;
+    }
+
+    .status {
+        display: inline-block;
+        padding: 7px 12px;
+        border-radius: 30px;
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: capitalize;
+        white-space: nowrap;
+    }
+
+    .status.pending {
+        background: #fff4df;
+        color: #9a6800;
+    }
+
+    .status.approved {
+        background: #eaf3ff;
+        color: #245b9e;
+    }
+
+    .status.called {
+        background: #eeeaff;
+        color: #6042df;
+    }
+
+    .status.completed {
+        background: #e5f7ec;
+        color: #187344;
+    }
+
+    .status.missed,
+    .status.declined {
+        background: #ffe9eb;
+        color: #b4233b;
+    }
+
+    .priority-label {
+        display: inline-block;
+        margin-top: 12px;
+        padding: 6px 10px;
+        background: #fff4df;
+        color: #986500;
+        border-radius: 7px;
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: capitalize;
+    }
+
+    .called-banner {
+        margin-top: 16px;
+        padding: 13px 15px;
+        background: #f0edff;
+        color: #5942bd;
+        border-radius: 10px;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.7;
+    }
+
+    /* QUEUE INFO */
+
+    .queue-info {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 16px;
+    }
+
+    .queue-box {
+        background: #f8f7ff;
+        border: 1px solid #eeebff;
+        padding: 13px 16px;
+        border-radius: 11px;
+        min-width: 145px;
+    }
+
+    .queue-box small {
+        display: block;
+        color: var(--muted);
+        font-size: 10px;
+        margin-bottom: 6px;
+    }
+
+    .queue-box strong {
+        color: var(--purple-dark);
+        font-size: 20px;
+    }
+
+    /* COUNTER DETAILS */
+
+    .counter-details {
+        margin-top: 16px;
+        padding: 16px;
+        background: #f9f9fd;
+        border: 1px solid var(--border);
+        border-radius: 11px;
+    }
+
+    .counter-details h4 {
+        color: #3a315f;
+        margin-bottom: 10px;
+        font-size: 13px;
+    }
+
+    .counter-details p {
+        margin-top: 5px;
+    }
+
+    .reschedule-form {
+        margin-top: 15px;
+        padding: 17px;
+        background: #faf8ff;
+        border: 1px solid #e6e1ff;
+        border-radius: 12px;
+    }
+
+    .reschedule-form label {
+        display: block;
+        margin-bottom: 9px;
+        color: #302875;
+        font-weight: 800;
+        font-size: 12px;
+    }
+
+    .reschedule-form input {
+        padding: 11px;
+        border: 1px solid #d9d5ef;
+        border-radius: 8px;
+        width: 100%;
+        max-width: 270px;
+        display: block;
+        background: white;
+    }
+
+    .reschedule-form button {
+        margin-top: 12px;
+        background: var(--purple);
+        color: white;
+        border: 0;
+        padding: 11px 17px;
+        border-radius: 8px;
+        font-weight: 800;
+        font-size: 11px;
+        cursor: pointer;
+    }
+
+    .reschedule-form button:hover {
+        background: var(--purple-dark);
+    }
+
+    /* NOTIFICATIONS */
+
+    .notification-list {
+        display: grid;
+        gap: 11px;
+    }
+
+    .notification-card {
+        background: white;
+        padding: 16px 18px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        display: flex;
+        gap: 13px;
+        align-items: flex-start;
+    }
+
+    .notification-icon {
+        width: 35px;
+        height: 35px;
+        min-width: 35px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        background: #f0edff;
+        font-size: 15px;
+    }
+
+    .notification-card p {
+        color: #4d4b63;
+        font-size: 12px;
+        line-height: 1.7;
+    }
+
+    .notification-card small {
+        color: #9997aa;
+        display: block;
+        margin-top: 6px;
+        font-size: 10px;
+    }
+
+    .notification-card.unread {
+        border-left: 4px solid var(--purple);
+        background: #fcfbff;
+    }
+
+    .unread-count {
+        background: #f0edff;
+        color: var(--purple-dark);
+        padding: 6px 11px;
+        border-radius: 30px;
+        font-size: 10px;
+        font-weight: 800;
+    }
+
+    .notification-card button {
+        margin-top: 9px;
+        background: var(--purple-light);
+        color: var(--purple-dark);
+        border: 0;
+        padding: 8px 11px;
+        border-radius: 7px;
+        font-size: 10px;
+        font-weight: 800;
+        cursor: pointer;
+    }
+
+    /* EMPTY STATES */
+
+    .empty {
+        padding: 35px 20px;
+        text-align: center;
+        background: white;
+        border-radius: 15px;
+        color: var(--muted);
+        border: 1px solid var(--border);
+    }
+
+    .empty h3 {
+        color: #33314e;
+        margin-bottom: 8px;
+        font-size: 16px;
+    }
+
+    .empty p {
+        font-size: 12px;
+        line-height: 1.7;
+    }
+
+    /* RESPONSIVE */
+
+    @media(max-width: 1100px) {
+        .dashboard {
+            grid-template-columns: 205px minmax(0, 1fr);
+            padding: 20px;
+            gap: 18px;
+        }
+
+        .stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .service-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media(max-width: 750px) {
+        .dashboard {
+            display: block;
+            padding: 18px 14px;
+        }
+
+        .sidebar {
+            position: relative;
+            top: auto;
+            min-height: auto;
+            padding: 14px;
+            margin-bottom: 20px;
+            border-radius: 15px;
+        }
+
+        .sidebar-brand {
+            padding: 5px 8px 12px;
+        }
+
+        .sidebar-brand h2 {
+            font-size: 18px;
+        }
+
+        .sidebar-brand p,
+        .sidebar-label,
+        .sidebar-bottom {
+            display: none;
+        }
+
+        .sidebar-nav {
+            display: flex;
+            overflow-x: auto;
+            gap: 6px;
+            padding-top: 12px;
+        }
+
+        .sidebar-nav a {
+            white-space: nowrap;
+            padding: 10px;
+            font-size: 11px;
+        }
+
+        .sidebar-icon {
+            font-size: 14px;
+        }
+
+        .topbar {
+            align-items: flex-start;
+        }
+
+        .topbar h1 {
+            font-size: 21px;
+        }
+
+        .welcome {
+            padding: 25px;
+        }
+
+        .welcome h2 {
+            font-size: 24px;
+        }
+    }
+
+    @media(max-width: 520px) {
+        .stats {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .stat-card {
+            padding: 14px;
+        }
+
+        .stat-card h2 {
+            font-size: 23px;
+        }
+
+        .service-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .topbar {
+            flex-direction: column;
+        }
+
+        .welcome h2 {
+            font-size: 22px;
+        }
+
+        .section-heading h2 {
+            font-size: 17px;
+        }
+
+        .token-card {
+            padding: 16px;
+        }
+    }
+
+/* =================================
+   QUEUEFLOW VISUAL ENHANCEMENTS
+================================= */
+
+/* Overall page background */
+body {
+    background: linear-gradient(135deg, #eeebff 0%, #f5f3ff 45%, #e9efff 100%) !important;
+}
+
+/* Dashboard content background */
+.dashboard-main {
+    background: rgba(255, 255, 255, 0.55);
+    padding: 22px;
+    border-radius: 22px;
+    border: 1px solid rgba(255,255,255,0.8);
+}
+
+/* Top heading */
+.topbar {
+    background: linear-gradient(110deg, #ffffff, #eeeaff);
+    padding: 22px 25px;
+    border-radius: 15px;
+    border-left: 5px solid #7657f6;
+    box-shadow: 0 5px 18px rgba(67, 48, 130, 0.07);
+}
+
+.topbar h1 {
+    color: #35246f;
+}
+
+/* Section heading panels */
+.section-heading {
+    background: linear-gradient(110deg, #30245f, #6042bd, #8065ed);
+    padding: 18px 22px;
+    border-radius: 13px;
+    margin-top: 35px;
+    margin-bottom: 18px;
+    box-shadow: 0 7px 18px rgba(73, 53, 150, 0.16);
+}
+
+.section-heading h2 {
+    color: #ffffff;
+    font-size: 18px;
+}
+
+.section-heading .section-subtitle {
+    color: #e2dcff;
+}
+
+/* Service cards */
+.service-card {
+    background: linear-gradient(145deg, #ffffff, #f8f6ff);
+    border: 1px solid #e4ddff;
+    box-shadow: 0 6px 18px rgba(66, 45, 130, 0.06);
+}
+
+.service-card:hover {
+    background: linear-gradient(145deg, #ffffff, #f0ebff);
+    border-color: #a895ff;
+}
+
+/* Token cards */
+.token-card {
+    background: linear-gradient(120deg, #ffffff, #faf8ff);
+    border: 1px solid #e3ddff;
+    border-left: 4px solid #8065ed;
+    box-shadow: 0 6px 18px rgba(66, 45, 130, 0.07);
+}
+
+/* Notification cards */
+.notification-card {
+    background: linear-gradient(110deg, #ffffff, #f8f6ff);
+    border-color: #e5dfff;
+}
+
+/* Statistics */
+.stat-card {
+    background: linear-gradient(145deg, #ffffff, #f2efff);
+    border: 1px solid #e4ddff;
+    box-shadow: 0 6px 18px rgba(66, 45, 130, 0.07);
+}
+
+.stat-card h2 {
+    color: #6042bd;
+}
+
+/* Empty states */
+.empty {
+    background: linear-gradient(120deg, #ffffff, #f0edff);
+    border: 1px dashed #b8a9ff;
+}
+
+/* Queue information */
+.queue-box {
+    background: linear-gradient(135deg, #eeeaff, #e2dcff);
+    border-color: #d8ceff;
+}
+
+/* Counter details */
+.counter-details {
+    background: linear-gradient(120deg, #f5f2ff, #ffffff);
+    border-color: #e0d9ff;
+}
+
+/* Reschedule form */
+.reschedule-form {
+    background: linear-gradient(120deg, #eeeaff, #faf8ff);
+    border-color: #cfc2ff;
+}
+
+/* Sidebar accent */
+.sidebar {
+    background: linear-gradient(180deg, #17172f, #28204e 65%, #3b2a70);
+}
+
+/* Hover effect on navigation */
+.sidebar-nav a:hover {
+    transform: translateX(3px);
+}
+
+/* Better card transitions */
+.stat-card,
+.service-card,
+.token-card,
+.notification-card {
+    transition: all 0.25s ease;
+}
+
+/* Mobile layout */
+@media(max-width: 750px) {
+    .dashboard-main {
+        padding: 12px;
+    }
+
+    .section-heading {
+        padding: 15px;
+    }
+}
+
+</style>
+
+
+<div class="dashboard">
+
+    <!-- SIDEBAR -->
+
+    <aside class="sidebar">
+
+        <div class="sidebar-brand">
+            <h2>QueueFlow <span>AI.</span></h2>
+            <p>SMART CAMPUS PLATFORM</p>
+        </div>
+
+        <div class="sidebar-label">MAIN MENU</div>
+
+        <nav class="sidebar-nav">
+            <a href="#overview" class="active">
+                <span class="sidebar-icon">⌂</span>
+                Overview
+            </a>
+
+            <a href="#services">
+                <span class="sidebar-icon">▦</span>
+                Campus Services
+            </a>
+
+            <a href="#tokens">
+                <span class="sidebar-icon">▤</span>
+                My Tokens
+            </a>
+
+            <a href="#notifications">
+                <span class="sidebar-icon">♧</span>
+                Notifications
+            </a>
+        </nav>
+
+        <div class="sidebar-bottom">
+
+            <div class="sidebar-user">
+                <strong>{{ current_user.name }}</strong>
+                <small>Student Account</small>
+            </div>
+
+            <a class="sidebar-logout" href="{{ url_for('auth.logout') }}">
+                ↗ Sign Out
+            </a>
+
+        </div>
+
+    </aside>
+
+
+    <!-- DASHBOARD CONTENT -->
+
+    <main class="dashboard-main">
+
+        <!-- TOP BAR -->
+
+        <header class="topbar" id="overview">
+
+            <div>
+                <h1>Student Dashboard</h1>
+                <p>Manage your campus services and queue activity.</p>
+            </div>
+
+            <span class="live-indicator">
+                <span class="live-dot"></span>
+                LIVE UPDATES
+            </span>
+
+        </header>
+
+
+        <!-- WELCOME -->
+
+        <section class="welcome">
+
+            <div class="welcome-content">
+
+                <span class="welcome-tag">YOUR CAMPUS, SIMPLIFIED</span>
+
+                <h2>Hello, {{ current_user.name }} 👋</h2>
+
+                <p>
+                    Welcome to your QueueFlow workspace.
+                    Book campus services, monitor your queue position
+                    and stay updated without waiting in long queues.
+                </p>
+
+                <a href="{{ url_for('student.book_token') }}"
+                   class="welcome-button">
+                    + Book a Service
+                </a>
+
+            </div>
+
+        </section>
+
+
+        <!-- STATISTICS -->
+
+        <section class="stats">
+
+            <div class="stat-card">
+                <div class="stat-icon icon-purple">▦</div>
+                <small>Available Services</small>
+                <h2>{{ services|length }}</h2>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon icon-blue">🎟</div>
+                <small>Active Tokens</small>
+                <h2 id="active-token-count">{{ active_count }}</h2>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon icon-green">✓</div>
+                <small>Completed Tokens</small>
+                <h2 id="completed-token-count">{{ completed_count }}</h2>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon icon-orange">♧</div>
+                <small>Unread Notifications</small>
+                <h2 id="unread-notification-count">
+                    {{ unread_notification_count }}
+                </h2>
+            </div>
+
+        </section>
+
+
+        <!-- SERVICES -->
+
+        <section id="services">
+
+            <div class="section-heading">
+
+                <div>
+                    <h2>Explore Campus Services</h2>
+                    <p class="section-subtitle">
+                        Choose a service and reserve your place in the queue.
+                    </p>
+                </div>
+
+                <a href="{{ url_for('student.book_token') }}"
+                   class="book-main-btn">
+                    + Book a Token
+                </a>
+
+            </div>
+
+
+            {% if services %}
+
+                <div class="service-grid">
+
+                    {% for service, department in services %}
+
+                        <article class="service-card">
+
+                            <div class="service-icon">🏢</div>
+
+                            <h3>{{ service.name }}</h3>
+
+                            <p>
+                                {{ service.description or "Campus service available for booking." }}
+                            </p>
+
+                            <div class="service-meta">
+                                {{ department.name }}
+                            </div>
+
+                            <p style="margin-top:8px;">
+                                ⏱ Estimated time:
+                                {{ service.estimated_minutes }} minutes
+                            </p>
+
+                            <p style="margin-top:5px;">
+                                {% if service.fee and service.fee > 0 %}
+                                    Fee: ₹{{ service.fee }}
+                                {% else %}
+                                    Free service
+                                {% endif %}
+                            </p>
+
+                            <a href="{{ url_for('student.book_token') }}"
+                               class="service-book-btn">
+                                Book a Token →
+                            </a>
+
+                        </article>
+
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <div class="empty">
+                    <h3>No services available yet</h3>
+                    <p>
+                        Campus services will appear here once the administrator adds them.
+                    </p>
+                </div>
+
+            {% endif %}
+
+        </section>
+
+
+        <!-- TOKENS -->
+
+        <section id="tokens">
+
+            <div class="section-heading">
+
+                <div>
+                    <h2>My Tokens & Queue Tracking</h2>
+                    <p class="section-subtitle">
+                        Follow your booking status and assigned counter.
+                    </p>
+                </div>
+
+            </div>
+
+
+            {% if token_records %}
+
+                <div class="token-list" id="token-list">
+
+                    {% for token, service, department, counter in token_records %}
+
+                        <article class="token-card"
+                                 data-token-id="{{ token.id }}">
+
+                            <div class="token-top">
+
+                                <div>
+                                    <h3>🎟️ {{ token.code }}</h3>
+
+                                    <p>
+                                        {{ service.name }} · {{ department.name }}
+                                    </p>
+
+                                    <p>
+                                        Visit date:
+                                        {{ token.visit_date.strftime('%d %b %Y') }}
+                                    </p>
+                                </div>
+
+                                <span class="status {{ token.status }}"
+                                      data-token-status>
+                                    {{ token.status }}
+                                </span>
+
+                            </div>
+
+
+                            {% if token.priority != "normal" %}
+
+                                <span class="priority-label">
+                                    {{ token.priority }} priority
+
+                                    {% if not token.priority_verified %}
+                                        · Verification pending
+                                    {% else %}
+                                        · Verified
+                                    {% endif %}
+                                </span>
+
+                            {% endif %}
+
+
+                            <!-- STATUS MESSAGE -->
+
+                            <div class="called-banner"
+                                 data-status-banner
+                                 style="
+                                 {% if token.status == 'pending' %}
+                                     background:#fff7e8;color:#946200;
+                                 {% elif token.status == 'approved' %}
+                                     background:#eaf3ff;color:#245b9e;
+                                 {% elif token.status == 'completed' %}
+                                     background:#e4f8ec;color:#187344;
+                                 {% elif token.status in ['missed', 'declined'] %}
+                                     background:#ffe9e9;color:#b42323;
+                                 {% endif %}
+                                 ">
+
+                                {% if token.status == "called" %}
+
+                                    📢 Your token has been called!
+                                    Please proceed to your assigned counter.
+
+                                {% elif token.status == "pending" %}
+
+                                    ⏳ Your booking is awaiting administrator approval.
+
+                                {% elif token.status == "approved" %}
+
+                                    ✓ Your token is approved. Please check your counter
+                                    and queue position below.
+
+                                {% elif token.status == "completed" %}
+
+                                    ✓ Your service has been marked as completed.
+
+                                {% elif token.status == "missed" %}
+
+                                    Your token was marked as missed.
+
+                                {% elif token.status == "declined" %}
+
+                                    Your booking was declined.
+
+                                    {% if token.decline_reason %}
+                                        Reason: {{ token.decline_reason }}
+                                    {% else %}
+                                        Contact the administrator for more information.
+                                    {% endif %}
+
+                                {% endif %}
+
+                            </div>
+
+
+                            <!-- RESCHEDULE -->
+
+                            {% if token.status == "missed" %}
+
+                                <form method="POST"
+                                      action="{{ url_for('student.reschedule_token', token_id=token.id) }}"
+                                      class="reschedule-form"
+                                      data-reschedule-form>
+
+                                    <label>Select a new visit date</label>
+
+                                    <input
+                                        type="date"
+                                        name="visit_date"
+                                        min="{{ today_date }}"
+                                        max="{{ max_visit_date }}"
+                                        required
+                                    >
+
+                                    <button type="submit">
+                                        Reschedule Token →
+                                    </button>
+
+                                    <p style="margin-top:9px;">
+                                        Your new booking will require administrator approval.
+                                    </p>
+
+                                </form>
+
+                            {% endif %}
+
+
+                            <!-- QUEUE POSITION -->
+
+                            {% if token.status == "approved" and counter %}
+
+                                <div class="queue-info">
+
+                                    <div class="queue-box">
+                                        <small>Your Queue Position</small>
+
+                                        <strong data-queue-position>
+                                            {% if queue_positions.get(token.id) %}
+                                                #{{ queue_positions.get(token.id) }}
+                                            {% else %}
+                                                Awaiting
+                                            {% endif %}
+                                        </strong>
+                                    </div>
+
+                                    <div class="queue-box">
+                                        <small>Estimated Service Time</small>
+                                        <strong>
+                                            {{ service.estimated_minutes }} min
+                                        </strong>
+                                    </div>
+
+                                </div>
+
+                            {% endif %}
+
+
+                            <!-- COUNTER INFORMATION -->
+
+                            {% if counter %}
+
+                                <div class="counter-details"
+                                     data-counter-details>
+
+                                    <h4>
+                                        📍 Assigned Counter:
+                                        <span data-counter-name>{{ counter.name }}</span>
+                                    </h4>
+
+                                    <p>
+                                        <strong>Building:</strong>
+                                        <span data-building>
+                                            {{ counter.building or "Not specified" }}
+                                        </span>
+                                    </p>
+
+                                    <p>
+                                        <strong>Floor:</strong>
+                                        <span data-floor>
+                                            {{ counter.floor or "Not specified" }}
+                                        </span>
+                                    </p>
+
+                                    <p>
+                                        <strong>Room:</strong>
+                                        <span data-room>
+                                            {{ counter.room or "Not specified" }}
+                                        </span>
+                                    </p>
+
+                                    <p>
+                                        <strong>Directions:</strong>
+                                        <span data-directions>
+                                            {{ counter.directions or "Not specified" }}
+                                        </span>
+                                    </p>
+
+                                    {% if department.contact_phone %}
+                                        <p>
+                                            <strong>Contact:</strong>
+                                            {{ department.contact_phone }}
+                                        </p>
+                                    {% endif %}
+
+                                    {% if department.contact_email %}
+                                        <p>
+                                            <strong>Email:</strong>
+                                            {{ department.contact_email }}
+                                        </p>
+                                    {% endif %}
+
+                                </div>
+
+                            {% elif token.status == "approved" %}
+
+                                <p style="margin-top:12px;"
+                                   data-counter-pending>
+                                    Counter assignment is pending. Please check again later.
+                                </p>
+
+                            {% endif %}
+
+                        </article>
+
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <div class="empty" id="no-tokens-message">
+                    <h3>🎟️ No tokens booked yet</h3>
+                    <p>
+                        Your booked tokens will appear here.
+                        Start by booking a campus service.
+                    </p>
+                </div>
+
+            {% endif %}
+
+        </section>
+
+
+        <!-- NOTIFICATIONS -->
+
+        <section id="notifications">
+
+            <div class="section-heading">
+
+                <div>
+                    <h2>Recent Notifications</h2>
+                    <p class="section-subtitle">
+                        Stay updated about your campus bookings.
+                    </p>
+                </div>
+
+                <span class="unread-count" id="unread-notification-label">
+                    {{ unread_notification_count }} unread
+                </span>
+
+            </div>
+
+
+            {% if notifications %}
+
+                <div class="notification-list" id="notification-list">
+
+                    {% for notification in notifications %}
+
+                        <article class="notification-card
+                            {% if not notification.is_read %}unread{% endif %}"
+                            data-notification-id="{{ notification.id }}">
+
+                            <div class="notification-icon">
+                                {% if notification.is_read %}
+                                    ✓
+                                {% else %}
+                                    🔔
+                                {% endif %}
+                            </div>
+
+                            <div>
+
+                                <p>{{ notification.message }}</p>
+
+                                <small>
+                                    {{ notification.created_at.strftime('%d %b %Y, %I:%M %p') }}
+
+                                    {% if not notification.is_read %}
+                                        · Unread
+                                    {% else %}
+                                        · Read
+                                    {% endif %}
+                                </small>
+
+                                {% if not notification.is_read %}
+
+                                    <form method="POST"
+                                          action="{{ url_for(
+                                              'student.mark_notification_read',
+                                              notification_id=notification.id
+                                          ) }}"
+                                          style="margin-top:10px;">
+
+                                        <button type="submit">
+                                            Mark as Read
+                                        </button>
+
+                                    </form>
+
+                                {% endif %}
+
+                            </div>
+
+                        </article>
+
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <div class="notification-list" id="notification-list">
+
+                    <div class="empty">
+                        <h3>No notifications yet</h3>
+                        <p>
+                            Updates about your bookings and tokens will appear here.
+                        </p>
+                    </div>
+
+                </div>
+
+            {% endif %}
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- LIVE DASHBOARD JAVASCRIPT -->
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const updateUrl = "{{ url_for('student.dashboard_updates') }}";
+
+    const readUrlTemplate =
+        "{{ url_for('student.mark_notification_read', notification_id=0) }}";
+
+    const rescheduleUrlTemplate =
+        "{{ url_for('student.reschedule_token', token_id=0) }}";
+
+    const todayDate = "{{ today_date }}";
+    const maxVisitDate = "{{ max_visit_date }}";
+
+    const statusMessages = {
+        pending: "⏳ Your booking is awaiting administrator approval.",
+        approved: "✓ Your token is approved. Please check your counter and queue position below.",
+        called: "📢 Your token has been called! Please proceed to your assigned counter.",
+        completed: "✓ Your service has been marked as completed.",
+        missed: "Your token was marked as missed.",
+        declined: "Your booking was declined."
+    };
+
+    function createElement(tag, className, text) {
+        const element = document.createElement(tag);
+
+        if (className) {
+            element.className = className;
+        }
+
+        if (text !== undefined) {
+            element.textContent = text;
+        }
+
+        return element;
+    }
+
+
+    function createRescheduleForm(tokenId) {
+
+        const form = createElement("form", "reschedule-form");
+
+        form.method = "POST";
+
+        form.action = rescheduleUrlTemplate.replace(
+            "/0/reschedule",
+            "/" + tokenId + "/reschedule"
+        );
+
+        form.setAttribute("data-reschedule-form", "");
+
+        const label = createElement(
+            "label",
+            "",
+            "Select a new visit date"
+        );
+
+        const input = createElement("input");
+
+        input.type = "date";
+        input.name = "visit_date";
+        input.min = todayDate;
+        input.max = maxVisitDate;
+        input.required = true;
+
+        const button = createElement(
+            "button",
+            "",
+            "Reschedule Token →"
+        );
+
+        button.type = "submit";
+
+        const note = createElement(
+            "p",
+            "",
+            "Your new booking will require administrator approval."
+        );
+
+        note.style.marginTop = "9px";
+
+        form.appendChild(label);
+        form.appendChild(input);
+        form.appendChild(button);
+        form.appendChild(note);
+
+        return form;
+    }
+
+
+    function updateToken(token) {
+
+        const card = document.querySelector(
+            `[data-token-id="${token.id}"]`
+        );
+
+        if (!card) return;
+
+        const badge = card.querySelector("[data-token-status]");
+
+        if (badge) {
+            badge.className = "status " + token.status;
+            badge.textContent = token.status;
+        }
+
+        let banner = card.querySelector("[data-status-banner]");
+
+        if (!banner) {
+            banner = createElement("div", "called-banner");
+            banner.setAttribute("data-status-banner", "");
+            card.appendChild(banner);
+        }
+
+        banner.textContent =
+            statusMessages[token.status] || token.status;
+
+        const bannerColors = {
+            pending: ["#fff7e8", "#946200"],
+            approved: ["#eaf3ff", "#245b9e"],
+            called: ["#eeeaff", "#4433b5"],
+            completed: ["#e4f8ec", "#187344"],
+            missed: ["#ffe9e9", "#b42323"],
+            declined: ["#ffe9e9", "#b42323"]
+        };
+
+        const colors = bannerColors[token.status];
+
+        if (colors) {
+            banner.style.background = colors[0];
+            banner.style.color = colors[1];
+        }
+
+        if (token.status === "declined" && token.decline_reason) {
+            banner.textContent += " Reason: " + token.decline_reason;
+        }
+
+        let rescheduleForm = card.querySelector(
+            "[data-reschedule-form]"
+        );
+
+        if (token.status === "missed" && !rescheduleForm) {
+
+            rescheduleForm = createRescheduleForm(token.id);
+
+            banner.insertAdjacentElement(
+                "afterend",
+                rescheduleForm
+            );
+
+        } else if (token.status !== "missed" && rescheduleForm) {
+
+            rescheduleForm.remove();
+
+        }
+
+        let queueInfo = card.querySelector(".queue-info");
+
+        if (token.status === "approved" && token.has_counter) {
+
+            if (!queueInfo) {
+
+                queueInfo = createElement("div", "queue-info");
+
+                const box = createElement("div", "queue-box");
+
+                box.appendChild(
+                    createElement("small", "", "Your Queue Position")
+                );
+
+                const position = createElement("strong");
+
+                position.setAttribute("data-queue-position", "");
+
+                box.appendChild(position);
+                queueInfo.appendChild(box);
+
+                card.appendChild(queueInfo);
+            }
+
+            const position = queueInfo.querySelector(
+                "[data-queue-position]"
+            );
+
+            if (position) {
+                position.textContent = token.queue_position
+                    ? "#" + token.queue_position
+                    : "Awaiting";
+            }
+
+        } else if (queueInfo) {
+
+            queueInfo.remove();
+
+        }
+
+        let counterDetails = card.querySelector(
+            "[data-counter-details]"
+        );
+
+        if (token.has_counter) {
+
+            if (!counterDetails) {
+
+                counterDetails = createElement("div", "counter-details");
+
+                counterDetails.setAttribute(
+                    "data-counter-details",
+                    ""
+                );
+
+                const heading = createElement(
+                    "h4",
+                    "",
+                    "📍 Assigned Counter: "
+                );
+
+                const name = createElement(
+                    "span",
+                    "",
+                    token.counter_name || ""
+                );
+
+                name.setAttribute("data-counter-name", "");
+
+                heading.appendChild(name);
+                counterDetails.appendChild(heading);
+
+                [
+                    ["Building:", "building", token.building],
+                    ["Floor:", "floor", token.floor],
+                    ["Room:", "room", token.room],
+                    ["Directions:", "directions", token.directions]
+                ].forEach(function (item) {
+
+                    const p = createElement("p");
+
+                    const strong = createElement(
+                        "strong",
+                        "",
+                        item[0]
+                    );
+
+                    const span = createElement(
+                        "span",
+                        "",
+                        item[2] || "Not specified"
+                    );
+
+                    span.setAttribute("data-" + item[1], "");
+
+                    p.appendChild(strong);
+                    p.appendChild(document.createTextNode(" "));
+                    p.appendChild(span);
+
+                    counterDetails.appendChild(p);
+                });
+
+                card.appendChild(counterDetails);
+            }
+
+            const fields = [
+                ["counter-name", token.counter_name],
+                ["building", token.building],
+                ["floor", token.floor],
+                ["room", token.room],
+                ["directions", token.directions]
+            ];
+
+            fields.forEach(function (field) {
+
+                const element = counterDetails.querySelector(
+                    `[data-${field[0]}]`
+                );
+
+                if (element) {
+                    element.textContent =
+                        field[1] || "Not specified";
+                }
+            });
+        }
+
+        const pendingMessage = card.querySelector(
+            "[data-counter-pending]"
+        );
+
+        if (token.has_counter && pendingMessage) {
+            pendingMessage.remove();
+        }
+    }
+
+
+    function updateNotifications(notifications) {
+
+        const list = document.getElementById("notification-list");
+
+        if (!list) return;
+
+        list.innerHTML = "";
+
+        if (notifications.length === 0) {
+
+            const empty = createElement(
+                "div",
+                "empty",
+                "No notifications yet."
+            );
+
+            list.appendChild(empty);
+            return;
+        }
+
+        notifications.forEach(function (notification) {
+
+            const card = createElement(
+                "article",
+                "notification-card"
+            );
+
+            if (!notification.is_read) {
+                card.classList.add("unread");
+            }
+
+            card.setAttribute(
+                "data-notification-id",
+                notification.id
+            );
+
+            const icon = createElement(
+                "div",
+                "notification-icon",
+                notification.is_read ? "✓" : "🔔"
+            );
+
+            const content = createElement("div");
+
+            const message = createElement(
+                "p",
+                "",
+                notification.message
+            );
+
+            const timestamp = createElement(
+                "small",
+                "",
+                notification.created_at +
+                (notification.is_read ? " · Read" : " · Unread")
+            );
+
+            content.appendChild(message);
+            content.appendChild(timestamp);
+
+            if (!notification.is_read) {
+
+                const form = createElement("form");
+
+                form.method = "POST";
+
+                form.action = readUrlTemplate.replace(
+                    "/0/read",
+                    "/" + notification.id + "/read"
+                );
+
+                form.style.marginTop = "10px";
+
+                const button = createElement(
+                    "button",
+                    "",
+                    "Mark as Read"
+                );
+
+                button.type = "submit";
+
+                form.appendChild(button);
+                content.appendChild(form);
+            }
+
+            card.appendChild(icon);
+            card.appendChild(content);
+
+            list.appendChild(card);
+        });
+    }
+
+
+    async function refreshDashboard() {
+
+        try {
+
+            const response = await fetch(updateUrl, {
+                method: "GET",
+                headers: {
+                    "Accept": "application/json"
+                },
+                credentials: "same-origin",
+                cache: "no-store"
+            });
+
+            if (!response.ok) {
+                return;
+            }
+
+            const data = await response.json();
+
+            data.tokens.forEach(updateToken);
+
+            document.getElementById(
+                "active-token-count"
+            ).textContent = data.active_count;
+
+            document.getElementById(
+                "completed-token-count"
+            ).textContent = data.completed_count;
+
+            document.getElementById(
+                "unread-notification-count"
+            ).textContent = data.unread_count;
+
+            document.getElementById(
+                "unread-notification-label"
+            ).textContent = data.unread_count + " unread";
+
+            updateNotifications(data.notifications);
+
+        } catch (error) {
+
+            console.error(
+                "QueueFlow live update error:",
+                error
+            );
+        }
+    }
+
+
+    refreshDashboard();
+
+    setInterval(refreshDashboard, 15000);
+
+});
+</script>
+
+{% endblock %}

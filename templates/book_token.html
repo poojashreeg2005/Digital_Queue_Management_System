@@ -1,0 +1,200 @@
+
+{% extends "base.html" %}
+
+{% block title %}Book a Token | QueueFlow AI{% endblock %}
+
+{% block content %}
+
+<style>
+    .booking-wrapper {
+        min-height: 85vh;
+        padding: 45px 20px;
+        background: linear-gradient(135deg, #f0edff, #edf8ff);
+    }
+
+    .booking-card {
+        max-width: 650px;
+        margin: auto;
+        background: white;
+        padding: 35px;
+        border-radius: 22px;
+        box-shadow: 0 15px 40px #29246f15;
+    }
+
+    .booking-card h1 {
+        font-size: 30px;
+        margin-bottom: 10px;
+        color: #25204f;
+    }
+
+    .booking-description {
+        color: #777d96;
+        line-height: 1.6;
+        margin-bottom: 28px;
+    }
+
+    .booking-field {
+        margin-bottom: 22px;
+    }
+
+    .booking-field label {
+        display: block;
+        font-weight: 700;
+        margin-bottom: 9px;
+    }
+
+    .booking-field select,
+    .booking-field input {
+        width: 100%;
+        padding: 14px;
+        border: 1px solid #dedff0;
+        border-radius: 10px;
+        font-size: 15px;
+        background: white;
+        color: #252044;
+    }
+
+    .booking-field select:focus,
+    .booking-field input:focus {
+        outline: none;
+        border-color: #6655e8;
+    }
+
+    .priority-info {
+        background: #fff7e7;
+        border: 1px solid #f3dfb2;
+        padding: 15px;
+        border-radius: 10px;
+        color: #78591b;
+        font-size: 13px;
+        line-height: 1.6;
+        margin-bottom: 22px;
+    }
+
+    .booking-submit {
+        width: 100%;
+        padding: 15px;
+        border: none;
+        border-radius: 10px;
+        color: white;
+        background: linear-gradient(100deg, #5141d1, #8870ef);
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .booking-submit:hover {
+        opacity: .92;
+    }
+
+    .back-link {
+        display: block;
+        text-align: center;
+        margin-top: 20px;
+        color: #5546d9;
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    @media(max-width: 600px) {
+        .booking-card {
+            padding: 25px 20px;
+        }
+    }
+</style>
+
+<section class="booking-wrapper">
+
+    <div class="booking-card">
+
+        <span class="role-label">SMART TOKEN BOOKING</span>
+
+        <h1>Book your token 🎟️</h1>
+
+        <p class="booking-description">
+            Select a campus service and visit date.
+            QueueFlow will generate a unique token for you.
+        </p>
+
+        {% if services %}
+
+        <form method="POST">
+
+            <div class="booking-field">
+                <label for="service_id">Select Service</label>
+
+                <select name="service_id" id="service_id" required>
+                    <option value="">Choose a service</option>
+
+                    {% for service, department in services %}
+                        <option value="{{ service.id }}">
+                            {{ department.name }} — {{ service.name }}
+                            {% if service.fee and service.fee > 0 %}
+                                (₹{{ service.fee }})
+                            {% else %}
+                                (Free)
+                            {% endif %}
+                        </option>
+                    {% endfor %}
+
+                </select>
+            </div>
+
+            <div class="booking-field">
+                <label for="visit_date">Select Visit Date</label>
+
+                <input
+                    type="date"
+                    name="visit_date"
+                    id="visit_date"
+                    min="{{ today }}"
+                    max="{{ last_date }}"
+                    value="{{ today }}"
+                    required
+                >
+            </div>
+
+            <div class="booking-field">
+                <label for="priority">Assistance Type</label>
+
+                <select name="priority" id="priority" required>
+                    <option value="normal">Normal</option>
+                    <option value="accessibility">Accessibility assistance</option>
+                    <option value="urgent">Urgent</option>
+                    <option value="emergency">Emergency</option>
+                </select>
+            </div>
+
+            <div class="priority-info">
+                <strong>Priority verification:</strong>
+                Accessibility, urgent and emergency requests must be
+                reviewed by an administrator. Selecting a priority does
+                not automatically move your token ahead of others.
+                For an immediate emergency, contact campus emergency
+                services directly.
+            </div>
+
+            <button type="submit" class="booking-submit">
+                Confirm Token Booking →
+            </button>
+
+        </form>
+
+        {% else %}
+
+            <div class="priority-info">
+                No active campus services are available yet.
+                Please try again after the administrator adds services.
+            </div>
+
+        {% endif %}
+
+        <a class="back-link" href="{{ url_for('student.dashboard') }}">
+            ← Back to Dashboard
+        </a>
+
+    </div>
+
+</section>
+
+{% endblock %}

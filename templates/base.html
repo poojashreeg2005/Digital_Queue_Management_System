@@ -1,0 +1,505 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{% block title %}QueueFlow AI{% endblock %}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #7657f6;
+            --primary-dark: #6242e8;
+            --primary-light: #eeeaff;
+            --navy: #17152e;
+            --text: #25243a;
+            --muted: #85849b;
+            --surface: #ffffff;
+            --background: #f7f7fc;
+            --border: #ecebf4;
+            --success: #16865a;
+            --danger: #d94b61;
+            --shadow: 0 12px 35px rgba(39, 31, 94, 0.07);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--background);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        button,
+        input,
+        select,
+        textarea {
+            font-family: inherit;
+        }
+
+        /* NAVIGATION */
+
+        nav {
+            min-height: 76px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 7%;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--navy);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 23px;
+            font-weight: 700;
+            letter-spacing: -1px;
+        }
+
+        .logo::before {
+            content: "Q";
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 11px;
+            color: white;
+            font-size: 21px;
+            background: linear-gradient(135deg, #7657f6, #a18aff);
+            box-shadow: 0 5px 15px #7657f640;
+        }
+
+        .logo span {
+            color: var(--primary);
+        }
+
+        nav div {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        nav a:not(.logo) {
+            color: #65647b;
+            margin-left: 0;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 10px 16px;
+            border-radius: 9px;
+            transition: 0.25s ease;
+        }
+
+        nav a:not(.logo):hover {
+            color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        /* MAIN PAGE */
+
+        .page {
+            flex: 1;
+            min-height: 85vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 55px 20px;
+            position: relative;
+            isolation: isolate;
+            background:
+                radial-gradient(circle at 10% 15%, #e8e1ff 0, transparent 32%),
+                radial-gradient(circle at 90% 80%, #e1f0ff 0, transparent 32%),
+                #f8f8fd;
+        }
+
+        .page::before,
+        .page::after {
+            content: "";
+            position: absolute;
+            z-index: -1;
+            border-radius: 50%;
+            filter: blur(2px);
+            pointer-events: none;
+        }
+
+        .page::before {
+            width: 240px;
+            height: 240px;
+            border: 1px solid #7657f61a;
+            top: 8%;
+            left: 5%;
+        }
+
+        .page::after {
+            width: 180px;
+            height: 180px;
+            border: 1px solid #7657f61a;
+            bottom: 8%;
+            right: 7%;
+        }
+
+        /* AUTHENTICATION CARD */
+
+        .auth-card {
+            width: 100%;
+            max-width: 465px;
+            background: rgba(255, 255, 255, 0.96);
+            padding: 43px;
+            border: 1px solid #ffffff;
+            border-radius: 24px;
+            box-shadow:
+                0 25px 70px rgba(39, 31, 94, 0.10),
+                0 2px 8px rgba(39, 31, 94, 0.03);
+            position: relative;
+            animation: cardAppear 0.55s ease;
+        }
+
+        @keyframes cardAppear {
+            from {
+                opacity: 0;
+                transform: translateY(18px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .auth-card h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 30px;
+            letter-spacing: -1px;
+            color: var(--navy);
+            margin-bottom: 10px;
+        }
+
+        .muted {
+            color: var(--muted);
+            margin-bottom: 28px;
+            line-height: 1.7;
+            font-size: 14px;
+        }
+
+        /* FORM FIELDS */
+
+        .field {
+            margin-bottom: 19px;
+        }
+
+        .field label {
+            display: block;
+            font-weight: 700;
+            margin-bottom: 9px;
+            font-size: 13px;
+            color: #44435c;
+        }
+
+        .field input {
+            width: 100%;
+            padding: 14px 15px;
+            border: 1px solid #e5e4ef;
+            background: #fafaff;
+            border-radius: 11px;
+            outline: none;
+            font-size: 14px;
+            color: var(--text);
+            transition: 0.25s ease;
+        }
+
+        .field input:focus {
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 4px #7657f619;
+        }
+
+        .field input::placeholder {
+            color: #aaa9ba;
+        }
+
+        /* BUTTONS */
+
+        .primary-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(110deg, #6849ee, #9275ff);
+            color: white;
+            border: none;
+            border-radius: 11px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 8px;
+            box-shadow: 0 8px 20px #7657f633;
+            transition: 0.25s ease;
+        }
+
+        .primary-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px #7657f64a;
+        }
+
+        .primary-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* AUTH LINKS */
+
+        .auth-link {
+            text-align: center;
+            margin-top: 24px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .auth-link a {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .auth-link a:hover {
+            text-decoration: underline;
+        }
+
+        /* FLASH MESSAGES */
+
+        .flash {
+            padding: 14px 16px;
+            border-radius: 11px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            font-weight: 600;
+            border: 1px solid transparent;
+        }
+
+        .flash.success {
+            background: #eaf8f0;
+            color: #18764c;
+            border-color: #d1efdf;
+        }
+
+        .flash.error {
+            background: #fff0f1;
+            color: #b4233b;
+            border-color: #ffd9de;
+        }
+
+        .flash.warning {
+            background: #fff7e8;
+            color: #966200;
+            border-color: #ffebc3;
+        }
+
+        .flash.info {
+            background: #eef3ff;
+            color: #365bb5;
+            border-color: #dce6ff;
+        }
+
+        /* ROLE LABEL */
+
+        .role-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            background: #f0edff;
+            color: var(--primary-dark);
+            padding: 8px 13px;
+            border-radius: 30px;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        /* FOOTER */
+
+        footer {
+            text-align: center;
+            padding: 23px 15px;
+            color: #9291a5;
+            font-size: 12px;
+            background: #ffffff;
+            border-top: 1px solid var(--border);
+        }
+
+        footer strong {
+            color: var(--primary);
+        }
+
+        /* SELECTION */
+
+        ::selection {
+            background: #7657f633;
+            color: #30205e;
+        }
+
+        /* SCROLLBAR */
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f0f8;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #c7c0eb;
+            border-radius: 20px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #907ce8;
+        }
+
+        /* RESPONSIVE */
+
+        @media(max-width: 700px) {
+            nav {
+                padding: 0 4%;
+                min-height: 68px;
+            }
+
+            .logo {
+                font-size: 19px;
+            }
+
+            .logo::before {
+                width: 32px;
+                height: 32px;
+                font-size: 18px;
+            }
+
+            nav div {
+                gap: 2px;
+            }
+
+            nav a:not(.logo) {
+                padding: 9px 8px;
+                font-size: 12px;
+            }
+
+            .page {
+                padding: 35px 16px;
+            }
+
+            .auth-card {
+                padding: 32px 24px;
+            }
+
+            .auth-card h1 {
+                font-size: 26px;
+            }
+        }
+
+        @media(max-width: 380px) {
+            nav {
+                flex-wrap: wrap;
+                padding: 12px 4%;
+                gap: 8px;
+            }
+
+            nav div {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            nav a:not(.logo) {
+                padding: 8px 6px;
+            }
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <!-- NAVIGATION -->
+
+    <nav>
+
+        <a class="logo" href="{{ url_for('home') }}">
+            QueueFlow <span>AI</span>
+        </a>
+
+        <div>
+            <a href="{{ url_for('home') }}">Home</a>
+            <a href="{{ url_for('auth.student_login') }}">Student</a>
+            <a href="{{ url_for('auth.admin_login') }}">Admin</a>
+        </div>
+
+    </nav>
+
+
+    <!-- FLASH MESSAGES -->
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+
+        {% if messages %}
+
+            <div style="max-width:600px; width:100%; margin:20px auto 0; padding:0 15px;">
+
+                {% for category, message in messages %}
+
+                    <div class="flash {{ category }}">
+                        {{ message }}
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+        {% endif %}
+
+    {% endwith %}
+
+
+    <!-- PAGE CONTENT -->
+
+    {% block content %}{% endblock %}
+
+
+    <!-- FOOTER -->
+
+    <footer>
+        © 2026 <strong>QueueFlow AI</strong> · Smart Campus Service Management
+    </footer>
+
+</body>
+
+</html>

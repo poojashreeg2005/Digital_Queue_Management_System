@@ -1,0 +1,43 @@
+
+{% extends "base.html" %}
+
+{% block title %}Admin Login | QueueFlow AI{% endblock %}
+
+{% block content %}
+
+<section class="page">
+    <div class="auth-card">
+
+        <span class="role-label">ADMINISTRATOR PORTAL</span>
+
+        <h1>Admin Access</h1>
+        <p class="muted">Sign in to manage queues, counters and campus services.</p>
+
+        <form method="POST">
+
+            <div class="field">
+                <label>Administrator Email</label>
+                <input type="email" name="email"
+                       placeholder="Enter admin email" required>
+            </div>
+
+            <div class="field">
+                <label>Password</label>
+                <input type="password" name="password"
+                       placeholder="Enter admin password" required>
+            </div>
+
+            <button type="submit" class="primary-btn">
+                Administrator Login →
+            </button>
+
+        </form>
+
+        <div class="auth-link">
+            <a href="{{ url_for('home') }}">← Back to Home</a>
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,44 @@
+
+{% extends "base.html" %}
+
+{% block title %}Student Login | QueueFlow AI{% endblock %}
+
+{% block content %}
+
+<section class="page">
+    <div class="auth-card">
+
+        <span class="role-label">STUDENT PORTAL</span>
+
+        <h1>Welcome back!</h1>
+        <p class="muted">Log in to book tokens and track your queue.</p>
+
+        <form method="POST">
+
+            <div class="field">
+                <label>Email Address</label>
+                <input type="email" name="email"
+                       placeholder="Enter your registered email" required>
+            </div>
+
+            <div class="field">
+                <label>Password</label>
+                <input type="password" name="password"
+                       placeholder="Enter your password" required>
+            </div>
+
+            <button type="submit" class="primary-btn">
+                Student Login →
+            </button>
+
+        </form>
+
+        <div class="auth-link">
+            Don't have an account?
+            <a href="{{ url_for('auth.register') }}">Register</a>
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}

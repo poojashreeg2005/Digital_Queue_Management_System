@@ -1,23 +1,7 @@
-# Environment variables and secrets
-.env
-.env.*
-!.env.example
-
-# Python virtual environments
 venv/
-.venv/
-
-# Python cache files
+.env
 __pycache__/
-*.py[cod]
-
-# Test and tool caches
+*.pyc
 .pytest_cache/
-.mypy_cache/
-
-# Node dependencies
-node_modules/
-
-# Build output
-dist/
-build/
+instance/
+.DS_Store
