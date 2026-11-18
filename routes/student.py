@@ -13,6 +13,7 @@ from models import (
     db, Service, Department, Token,
     Counter, Notification
 )
+from queue_optimization import recommend_counter, schedule_tokens
 
 from routes.auth import role_required
 
@@ -44,22 +45,63 @@ def get_queue_positions():
     queue_positions = {}
 
     for tokens in queue_groups.values():
-
-        tokens.sort(
-            key=lambda token: (
-                0 if (
-                    token.priority != "normal"
-                    and token.priority_verified
-                ) else 1,
-                token.created_at or datetime.min,
-                token.id
-            )
-        )
+        tokens = schedule_tokens(tokens)
 
         for position, token in enumerate(tokens, start=1):
             queue_positions[token.id] = position
 
     return queue_positions
+
+
+def get_counter_recommendations(token_records):
+    """Recommend a current counter for pending or unassigned approved tokens."""
+    candidates = [
+        (token, service, department)
+        for token, service, department, _counter in token_records
+        if (
+            token.status in ("pending", "approved")
+            and token.counter_id is None
+            and service.active
+            and department.active
+        )
+    ]
+    if not candidates:
+        return {}
+
+    visit_dates = {token.visit_date for token, _, _ in candidates}
+    counters = (
+        Counter.query
+        .join(Department, Counter.department_id == Department.id)
+        .filter(Counter.active.is_(True), Department.active.is_(True))
+        .order_by(Counter.id)
+        .all()
+    )
+    waiting_tokens = (
+        Token.query
+        .filter(
+            Token.visit_date.in_(visit_dates),
+            Token.status.in_(("approved", "called"))
+        )
+        .all()
+    )
+    service_minutes = {
+        service.id: service.estimated_minutes
+        for service in Service.query.all()
+    }
+
+    recommendations = {}
+    for token, service, department in candidates:
+        counter = recommend_counter(
+            counters,
+            waiting_tokens,
+            department.id,
+            service_minutes,
+            token.visit_date,
+            exclude_token_id=token.id,
+        )
+        recommendations[token.id] = counter
+
+    return recommendations
 
 
 # --------------------------------------------------
@@ -105,6 +147,7 @@ def dashboard():
     )
 
     queue_positions = get_queue_positions()
+    counter_recommendations = get_counter_recommendations(token_records)
 
     notifications = (
         Notification.query
@@ -130,6 +173,7 @@ def dashboard():
         active_count=active_count,
         completed_count=completed_count,
         queue_positions=queue_positions,
+        counter_recommendations=counter_recommendations,
         notifications=notifications,
         unread_notification_count=unread_notification_count,
         today_date=date.today().isoformat(),
@@ -159,6 +203,7 @@ def dashboard_updates():
     )
 
     queue_positions = get_queue_positions()
+    counter_recommendations = get_counter_recommendations(token_records)
 
     active_statuses = ["pending", "approved", "called"]
 
@@ -175,6 +220,7 @@ def dashboard_updates():
     tokens = []
 
     for token, service, department, counter in token_records:
+        recommendation = counter_recommendations.get(token.id)
 
         tokens.append({
             "id": token.id,
@@ -186,7 +232,10 @@ def dashboard_updates():
             "floor": counter.floor if counter else None,
             "room": counter.room if counter else None,
             "directions": counter.directions if counter else None,
-            "decline_reason": token.decline_reason
+            "decline_reason": token.decline_reason,
+            "recommended_counter_name": (
+                recommendation.name if recommendation else None
+            )
         })
 
     notifications = (

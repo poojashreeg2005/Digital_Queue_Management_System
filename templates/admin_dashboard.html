@@ -794,6 +794,17 @@
 
                             {% endif %}
 
+                            {% if counter_recommendations.get(token.id) %}
+                                <p style="margin:9px 0;padding:9px;border-radius:8px;background:#f2efff;color:#4937ad;font-size:12px;">
+                                    <strong>Lowest-load recommendation:</strong>
+                                    {{ counter_recommendations.get(token.id).name }}
+                                </p>
+                            {% elif token.status in ["pending", "approved"] and not counter %}
+                                <p class="helper-text">
+                                    No active compatible counter is currently available.
+                                </p>
+                            {% endif %}
+
                             {% if token.status == "approved" %}
 
                                 {% set counter_check = namespace(has_counter=false) %}
@@ -1202,6 +1213,61 @@
                 <h3>No departments available</h3>
             </div>
 
+        {% endif %}
+
+    </section>
+
+    <!-- COUNTER WORKLOAD AND ALLOCATION -->
+
+    <section class="panel">
+
+        <h2>⚖ Smart Counter Workload</h2>
+
+        <p class="panel-description">
+            Workload includes approved waiting tokens and estimated remaining
+            time for called tokens on {{ selected_date }}. Inactive counters
+            are shown for visibility but are never recommended.
+        </p>
+
+        {% if counter_workloads %}
+            <div class="token-table-wrapper">
+                <table class="token-table">
+                    <thead>
+                        <tr>
+                            <th>Counter</th>
+                            <th>Availability</th>
+                            <th>Waiting</th>
+                            <th>In service</th>
+                            <th>Estimated workload</th>
+                            <th>Load balance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for workload in counter_workloads %}
+                            <tr>
+                                <td>
+                                    <strong>{{ workload.counter.name }}</strong>
+                                </td>
+                                <td>
+                                    {% if workload.available %}
+                                        Active
+                                    {% else %}
+                                        Unavailable
+                                    {% endif %}
+                                </td>
+                                <td>{{ workload.waiting_count }}</td>
+                                <td>{{ workload.in_service_count }}</td>
+                                <td>{{ workload.workload_minutes }} min</td>
+                                <td>{{ workload.allocation_status|capitalize }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty">
+                <h3>No counters have been configured</h3>
+            </div>
         {% endif %}
 
     </section>

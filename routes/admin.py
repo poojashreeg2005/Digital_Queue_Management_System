@@ -12,6 +12,11 @@ from models import (
     db, Token, Service, Department,
     Counter, User, Notification
 )
+from queue_optimization import (
+    calculate_counter_workloads,
+    recommend_counter,
+    schedule_tokens,
+)
 from routes.auth import role_required
 
 
@@ -28,6 +33,40 @@ def send_notification(user_id, message):
         message=message
     )
     db.session.add(notification)
+
+
+def load_allocation_snapshot(visit_date, lock_counters=False):
+    """Load currently eligible counters and their active queue workload."""
+    counter_query = (
+        Counter.query
+        .join(Department, Counter.department_id == Department.id)
+        .filter(
+            Counter.active.is_(True),
+            Department.active.is_(True)
+        )
+        .order_by(Counter.name, Counter.id)
+    )
+    if lock_counters:
+        counter_query = counter_query.with_for_update()
+
+    counters = counter_query.all()
+    waiting_tokens = (
+        Token.query
+        .filter(
+            Token.visit_date == visit_date,
+            Token.status.in_(("approved", "called"))
+        )
+        .all()
+    )
+    service_minutes = {
+        service_id: minutes
+        for service_id, minutes in db.session.query(
+            Service.id,
+            Service.estimated_minutes
+        ).all()
+    }
+
+    return counters, waiting_tokens, service_minutes
 
 
 # --------------------------------------------------
@@ -128,9 +167,29 @@ def dashboard():
         active=True
     ).order_by(Department.name).all()
 
-    counters = Counter.query.filter_by(
-        active=True
-    ).order_by(Counter.name).all()
+    counters, waiting_tokens, service_minutes = load_allocation_snapshot(
+        selected_date
+    )
+    all_counters = Counter.query.order_by(Counter.name).all()
+    counter_workloads = calculate_counter_workloads(
+        all_counters,
+        waiting_tokens,
+        service_minutes,
+        selected_date,
+        available_counter_ids={counter.id for counter in counters},
+    )
+    counter_recommendations = {}
+    for token, service, department, _student, _counter in token_records:
+        if token.status not in ("pending", "approved") or not service.active:
+            continue
+        counter_recommendations[token.id] = recommend_counter(
+            counters,
+            waiting_tokens,
+            department.id,
+            service_minutes,
+            selected_date,
+            exclude_token_id=token.id,
+        )
 
     return render_template(
         "admin_dashboard.html",
@@ -145,6 +204,8 @@ def dashboard():
         priority_count=priority_count,
         departments=departments,
         counters=counters,
+        counter_workloads=counter_workloads,
+        counter_recommendations=counter_recommendations,
         rescheduled_records=rescheduled_records,
         rescheduled_count=len(rescheduled_records)
     )
@@ -177,21 +238,59 @@ def token_action(token_id):
         flash("Invalid token action.", "error")
         return redirect(url_for("admin.dashboard"))
 
+    approval_flash = None
+    approval_flash_category = "success"
+
     if action == "approve":
 
         if token.status != "pending":
             flash("Only pending tokens can be approved.", "error")
             return redirect(url_for("admin.dashboard"))
 
+        service = db.session.get(Service, token.service_id)
+        recommendation = None
+        if service and service.active:
+            counters, waiting_tokens, service_minutes = (
+                load_allocation_snapshot(
+                    token.visit_date,
+                    lock_counters=True,
+                )
+            )
+            recommendation = recommend_counter(
+                counters,
+                waiting_tokens,
+                service.department_id,
+                service_minutes,
+                token.visit_date,
+                exclude_token_id=token.id,
+            )
+
         token.status = "approved"
+        token.counter_id = recommendation.id if recommendation else None
         token.decline_reason = None
 
-        send_notification(
-            token.user_id,
-            f"Your token {token.code} has been approved."
-        )
-
-        flash(f"Token {token.code} approved.", "success")
+        if recommendation:
+            send_notification(
+                token.user_id,
+                f"Your token {token.code} has been approved and assigned "
+                f"to {recommendation.name}."
+            )
+            approval_flash = (
+                f"Token {token.code} approved and assigned to "
+                f"{recommendation.name}."
+            )
+        else:
+            send_notification(
+                token.user_id,
+                f"Your token {token.code} has been approved. "
+                "No active compatible counter is available yet; "
+                "the administrator will assign one when available."
+            )
+            approval_flash_category = "warning"
+            approval_flash = (
+                f"Token {token.code} approved, but no active compatible "
+                "counter is available."
+            )
 
     elif action == "decline":
 
@@ -286,6 +385,8 @@ def token_action(token_id):
 
     try:
         db.session.commit()
+        if approval_flash:
+            flash(approval_flash, approval_flash_category)
     except Exception:
         db.session.rollback()
         flash("Could not update the token. Please try again.", "error")
@@ -592,7 +693,14 @@ def assign_counter(token_id):
 
     service = db.session.get(Service, token.service_id)
 
-    if not service or service.department_id != counter.department_id:
+    department = db.session.get(Department, counter.department_id)
+
+    if (
+        not service
+        or not department
+        or not department.active
+        or service.department_id != counter.department_id
+    ):
         flash(
             "This counter does not belong to the token's department.",
             "error"
@@ -645,6 +753,11 @@ def call_next(counter_id):
         flash("Counter not found or inactive.", "error")
         return redirect(url_for("admin.dashboard"))
 
+    department = db.session.get(Department, counter.department_id)
+    if not department or not department.active:
+        flash("The counter's department is inactive.", "error")
+        return redirect(url_for("admin.dashboard"))
+
     eligible_tokens = (
         Token.query
         .join(Service, Token.service_id == Service.id)
@@ -652,7 +765,9 @@ def call_next(counter_id):
             Token.counter_id == counter.id,
             Token.status == "approved",
             Token.visit_date == date.today(),
-            Service.department_id == counter.department_id
+            Service.department_id == counter.department_id,
+            (Token.priority == "normal")
+            | (Token.priority_verified.is_(True))
         )
         .all()
     )
@@ -664,23 +779,7 @@ def call_next(counter_id):
         )
         return redirect(url_for("admin.dashboard"))
 
-    eligible_tokens.sort(
-        key=lambda token: (
-            0 if (
-                token.priority != "normal"
-                and token.priority_verified
-            ) else 1,
-            token.created_at
-        )
-    )
-
-    next_token = eligible_tokens[0]
-
-    if next_token.priority != "normal" and not next_token.priority_verified:
-        flash("Priority request must be verified before calling.", "error")
-        return redirect(
-            url_for("admin.dashboard", date=next_token.visit_date.isoformat())
-        )
+    next_token = schedule_tokens(eligible_tokens)[0]
 
     next_token.status = "called"
     next_token.called_at = datetime.utcnow()

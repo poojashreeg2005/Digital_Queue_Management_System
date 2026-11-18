@@ -1305,6 +1305,20 @@ body {
 
                             </div>
 
+                            {% if not counter and token.status in ["pending", "approved"] %}
+                                <p data-counter-recommendation
+                                   style="margin-top:12px;padding:12px 14px;border-radius:10px;background:#f2efff;color:#4937ad;">
+                                    {% if counter_recommendations.get(token.id) %}
+                                        Suggested counter:
+                                        <strong>{{ counter_recommendations.get(token.id).name }}</strong>
+                                        · subject to administrator approval.
+                                    {% else %}
+                                        No active compatible counter is available yet.
+                                        The administrator can assign one when available.
+                                    {% endif %}
+                                </p>
+                            {% endif %}
+
 
                             <!-- RESCHEDULE -->
 
@@ -1689,6 +1703,41 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (token.status === "declined" && token.decline_reason) {
             banner.textContent += " Reason: " + token.decline_reason;
+        }
+
+        let recommendation = card.querySelector(
+            "[data-counter-recommendation]"
+        );
+
+        if (
+            !token.has_counter
+            && ["pending", "approved"].includes(token.status)
+        ) {
+            if (!recommendation) {
+                recommendation = createElement(
+                    "p",
+                    "",
+                    ""
+                );
+                recommendation.setAttribute(
+                    "data-counter-recommendation",
+                    ""
+                );
+                recommendation.style.marginTop = "12px";
+                recommendation.style.padding = "12px 14px";
+                recommendation.style.borderRadius = "10px";
+                recommendation.style.background = "#f2efff";
+                recommendation.style.color = "#4937ad";
+                banner.insertAdjacentElement("afterend", recommendation);
+            }
+
+            recommendation.textContent = token.recommended_counter_name
+                ? "Suggested counter: " + token.recommended_counter_name
+                    + " · subject to administrator approval."
+                : "No active compatible counter is available yet. "
+                    + "The administrator can assign one when available.";
+        } else if (recommendation) {
+            recommendation.remove();
         }
 
         let rescheduleForm = card.querySelector(
