@@ -13,6 +13,7 @@ from models import (
     Counter, User, Notification
 )
 from routes.auth import role_required
+from routes.forecasting import get_forecast_payload, persist_forecasts
 
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
@@ -132,6 +133,11 @@ def dashboard():
         active=True
     ).order_by(Counter.name).all()
 
+    forecast_payload = get_forecast_payload()
+    forecast_warning = persist_forecasts(forecast_payload)
+    if forecast_warning:
+        forecast_payload["warning"] = forecast_warning
+
     return render_template(
         "admin_dashboard.html",
         token_records=token_records,
@@ -146,7 +152,11 @@ def dashboard():
         departments=departments,
         counters=counters,
         rescheduled_records=rescheduled_records,
-        rescheduled_count=len(rescheduled_records)
+        rescheduled_count=len(rescheduled_records),
+        forecast_departments=forecast_payload["departments"],
+        forecast_predictions=forecast_payload["predictions"],
+        forecast_metrics=forecast_payload["metrics"],
+        forecast_warning=forecast_payload["warning"]
     )
 
 

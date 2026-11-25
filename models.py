@@ -205,3 +205,50 @@ class Payment(db.Model):
     payment_reference = db.Column(db.String(100))
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class ForecastModelRun(db.Model):
+    __tablename__ = "forecast_model_runs"
+
+    id = db.Column(db.Integer, primary_key=True)
+    model_path = db.Column(db.String(255), nullable=False)
+    dataset_path = db.Column(db.String(255), nullable=False)
+    trained_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    training_rows = db.Column(db.Integer, nullable=False)
+    test_rows = db.Column(db.Integer, nullable=False)
+    mae = db.Column(db.Float, nullable=False)
+    rmse = db.Column(db.Float, nullable=False)
+    r2 = db.Column(db.Float, nullable=False)
+    is_simulated = db.Column(db.Boolean, default=True, nullable=False)
+
+
+class PeakForecast(db.Model):
+    __tablename__ = "peak_forecasts"
+
+    id = db.Column(db.Integer, primary_key=True)
+    department_id = db.Column(
+        db.Integer,
+        db.ForeignKey("departments.id"),
+        nullable=False
+    )
+    forecast_date = db.Column(db.Date, nullable=False)
+    time_slot = db.Column(db.String(30), nullable=False)
+    expected_bookings = db.Column(db.Float, nullable=False)
+    demand_level = db.Column(db.String(10), nullable=False)
+    active_counters = db.Column(db.Integer, nullable=False)
+    recommendation = db.Column(db.Text, nullable=False)
+    model_run_id = db.Column(
+        db.Integer,
+        db.ForeignKey("forecast_model_runs.id"),
+        nullable=False
+    )
+    generated_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "department_id",
+            "forecast_date",
+            "time_slot",
+            name="uq_peak_forecast_department_date_slot"
+        ),
+    )

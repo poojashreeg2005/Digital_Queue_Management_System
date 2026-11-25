@@ -11,6 +11,7 @@ from models import db, User
 from routes.auth import auth_bp
 from routes.student import student_bp
 from routes.admin import admin_bp
+from routes.forecasting import forecasting_bp
 
 app = Flask(__name__)
 
@@ -36,6 +37,7 @@ def load_user(user_id):
 app.register_blueprint(auth_bp)
 app.register_blueprint(student_bp)
 app.register_blueprint(admin_bp)
+app.register_blueprint(forecasting_bp)
 
 @app.route("/")
 def home():
