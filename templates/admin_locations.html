@@ -130,6 +130,9 @@
     <a class="back-link" href="{{ url_for('admin.dashboard') }}">
         ← Back to Admin Dashboard
     </a>
+    <a class="back-link" href="{{ url_for('admin.manage_campus_locations') }}" style="margin-left:15px; color:#16865a;">
+        🗺️ Campus Locations &amp; Floor Plans
+    </a>
 
     <div class="management-header">
         <h1>Department & Counter Management</h1>
@@ -184,6 +187,89 @@
 
     </div>
 
+    <h2 class="section-heading">Add a Service</h2>
+
+    <div class="management-card">
+        {% if departments %}
+        <form method="POST" action="{{ url_for('admin.create_service') }}">
+            <label>Department</label>
+            <select name="department_id" required>
+                <option value="">Choose Department</option>
+                {% for department in departments %}
+                <option value="{{ department.id }}">{{ department.name }}</option>
+                {% endfor %}
+            </select>
+
+            <label>Service Name</label>
+            <input type="text" name="name" required>
+
+            <label>Description</label>
+            <textarea name="description"></textarea>
+
+            <label>Estimated Service Minutes</label>
+            <input type="number" name="estimated_minutes" min="1" value="15" required>
+
+            <label>Fee</label>
+            <input type="number" name="fee" min="0" step="0.01" value="0" required>
+
+            <label>
+                <input type="checkbox" name="active" value="1" checked>
+                Active and available for booking
+            </label>
+
+            <button type="submit">Add Service</button>
+        </form>
+        {% else %}
+        <p>Add a department before configuring services.</p>
+        {% endif %}
+    </div>
+
+    <h2 class="section-heading">Existing Services</h2>
+
+    <div class="management-grid">
+        {% for service, department in services %}
+        <div class="management-card">
+            <h2>{{ service.name }}</h2>
+            <form method="POST"
+                  action="{{ url_for('admin.update_service', service_id=service.id) }}">
+                <label>Department</label>
+                <select name="department_id" required>
+                    {% for available_department in departments %}
+                    <option value="{{ available_department.id }}"
+                        {% if available_department.id == department.id %}selected{% endif %}>
+                        {{ available_department.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+
+                <label>Service Name</label>
+                <input type="text" name="name" value="{{ service.name }}" required>
+
+                <label>Description</label>
+                <textarea name="description">{{ service.description or '' }}</textarea>
+
+                <label>Estimated Service Minutes</label>
+                <input type="number" name="estimated_minutes" min="1"
+                       value="{{ service.estimated_minutes or 15 }}" required>
+
+                <label>Fee</label>
+                <input type="number" name="fee" min="0" step="0.01"
+                       value="{{ service.fee or 0 }}" required>
+
+                <label>
+                    <input type="checkbox" name="active" value="1"
+                           {% if service.active %}checked{% endif %}>
+                    Active and available for booking
+                </label>
+
+                <button type="submit">Update Service</button>
+            </form>
+        </div>
+        {% else %}
+        <p>No services have been added yet.</p>
+        {% endfor %}
+    </div>
+
     <h2 class="section-heading">Add a New Counter</h2>
 
     <div class="management-card">
@@ -214,6 +300,21 @@
             <label>Directions</label>
             <textarea name="directions"
                       placeholder="Example: Enter through the main gate, turn left and proceed to Room 105."></textarea>
+
+            <label>Preferred priorities</label>
+            <p style="font-size:12px;color:#77748e;">
+                Preferences guide token assignment; every active counter can
+                serve all priorities in its department. Leave unselected to
+                accept all priorities equally.
+            </p>
+            <input type="hidden" name="preferred_priorities" value="">
+            {% for priority in priority_options %}
+            <label style="display:flex;align-items:center;gap:8px;margin:6px 0;">
+                <input type="checkbox" name="preferred_priorities"
+                       value="{{ priority }}" style="width:auto;">
+                {{ priority|capitalize }}
+            </label>
+            {% endfor %}
 
             <button type="submit">Add Counter</button>
 
@@ -261,6 +362,22 @@
 
                 <label>Directions</label>
                 <textarea name="directions">{{ counter.directions or '' }}</textarea>
+
+                <label>Preferred priorities</label>
+                <p style="font-size:12px;color:#77748e;">
+                    Preferences guide token assignment; every active counter can
+                    serve all priorities in its department.
+                </p>
+                <input type="hidden" name="preferred_priorities" value="">
+                {% for priority in priority_options %}
+                <label style="display:flex;align-items:center;gap:8px;margin:6px 0;">
+                    <input type="checkbox" name="preferred_priorities"
+                           value="{{ priority }}"
+                           {% if counter.preferred_priorities and priority in counter.preferred_priorities %}checked{% endif %}
+                           style="width:auto;">
+                    {{ priority|capitalize }}
+                </label>
+                {% endfor %}
 
                 <button type="submit">Update Counter</button>
 

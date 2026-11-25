@@ -1,0 +1,44 @@
+{
+  "model_type": "RandomForestRegressor",
+  "training_date": "2026-11-18T08:57:13.662502+00:00",
+  "dataset_size": 5000,
+  "feature_names": [
+    "queue_length_ahead",
+    "active_counters",
+    "estimated_workload_ahead",
+    "token_priority",
+    "department_category",
+    "service_category",
+    "hour_of_arrival",
+    "day_of_week",
+    "queue_category"
+  ],
+  "numeric_features": [
+    "queue_length_ahead",
+    "active_counters",
+    "estimated_workload_ahead",
+    "hour_of_arrival",
+    "day_of_week"
+  ],
+  "categorical_features": [
+    "token_priority",
+    "department_category",
+    "service_category",
+    "queue_category"
+  ],
+  "target_column": "waiting_time_minutes",
+  "evaluation_metrics": {
+    "mae": 9.3709,
+    "rmse": 17.2643,
+    "r2": 0.9854
+  },
+  "baseline_metrics": {
+    "mae": 101.4123,
+    "rmse": 142.9073,
+    "r2": -0.0007
+  },
+  "dataset_type": "SYNTHETIC DEMONSTRATION DATA",
+  "random_seed": 2026,
+  "artifact_format": "joblib",
+  "limitations": "Prototype trained only on transparent synthetic demonstration data. Metrics are not evidence of real-world QueueFlow accuracy."
+}

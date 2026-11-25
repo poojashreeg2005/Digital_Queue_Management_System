@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block title %}Instructions & Checklist | {{ purpose.name }} | QueueFlow AI{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/visitor.css') }}">
+
+<div class="page" style="padding: 30px 6%; display: block; min-height: auto; background: var(--background);">
+
+    <!-- BREADCRUMBS STEPPER -->
+    <div class="visitor-stepper">
+        <a href="{{ url_for('visitor.home') }}" class="step-item">
+            <span class="step-num">1</span> Home
+        </a>
+        <span class="step-separator">›</span>
+        <span class="step-item">
+            <span class="step-num">2</span> {{ purpose.name }}
+        </span>
+        <span class="step-separator">›</span>
+        <span class="step-item active">
+            <span class="step-num">3</span> Instructions & Checklist
+        </span>
+        <span class="step-separator">›</span>
+        <span class="step-item">
+            <span class="step-num">4</span> Token & Navigation
+        </span>
+    </div>
+
+    <!-- DEMO WATERMARK -->
+    <div class="demo-badge-banner">
+        <span>🏛️</span>
+        <div>
+            <strong>Canara Engineering College, Benjanapadavu</strong> — 
+            <span>Visitor Procedure Guidelines. <em>[Demonstration Data Mode]</em></span>
+        </div>
+    </div>
+
+    <!-- PURPOSE & DEPARTMENT HEADER -->
+    <div style="background:white; border:1px solid var(--border); border-radius:var(--radius-md); padding:26px 30px; margin-bottom:28px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; box-shadow:var(--shadow-sm);">
+        <div style="display:flex; align-items:center; gap:16px;">
+            <div class="purpose-icon" style="margin:0; width:52px; height:52px; font-size:26px;">
+                {{ purpose.icon or "📋" }}
+            </div>
+            <div>
+                <span class="role-label" style="margin-bottom:6px;">VISITOR GUIDELINES</span>
+                <h1 style="font-family:'Space Grotesk', sans-serif; font-size:24px; color:var(--navy); margin:0;">
+                    {{ purpose.name }}
+                </h1>
+                <p style="margin:4px 0 0; color:var(--muted); font-size:13px;">
+                    Department: <strong>{{ department.name }}</strong>
+                </p>
+            </div>
+        </div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <a href="{{ url_for('visitor.book_token', purpose=purpose.code, dept=department.id) }}" class="primary-btn" style="width:auto; margin:0; padding:11px 20px; font-size:13px;">
+                🎟️ Book Visitor Token →
+            </a>
+            {% if primary_location %}
+                <a href="{{ url_for('visitor.navigate', location_id=primary_location.id) }}" class="btn-hero-secondary" style="background:#f4f3fc; color:var(--primary-dark) !important; border:1px solid var(--border); padding:11px 18px; font-size:13px;">
+                    🗺️ Find on Map
+                </a>
+            {% else %}
+                <a href="{{ url_for('visitor.navigate') }}" class="btn-hero-secondary" style="background:#f4f3fc; color:var(--primary-dark) !important; border:1px solid var(--border); padding:11px 18px; font-size:13px;">
+                    🗺️ Campus Map
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- MAIN TWO-COLUMN INSTRUCTIONS LAYOUT -->
+    <div class="instructions-layout">
+
+        <!-- LEFT COLUMN: PROCEDURE & CHECKLIST -->
+        <div>
+            <!-- STEP-BY-STEP PROCEDURE -->
+            <div class="content-card">
+                <h2><span>🚶‍♂️</span> Step-by-Step Arrival Procedure</h2>
+                <div class="timeline-steps">
+                    {% for step in steps %}
+                        <div class="timeline-step">
+                            <div class="timeline-step-badge">{{ loop.index }}</div>
+                            <h4>Step {{ loop.index }}</h4>
+                            <p>{{ step }}</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- REQUIRED DOCUMENTS CHECKLIST -->
+            <div class="content-card">
+                <h2><span>📑</span> Required Documents Checklist</h2>
+                <p style="color:var(--muted); font-size:13px; margin-bottom:16px;">
+                    Please ensure you carry the following physical documents before arriving at the department:
+                </p>
+                <ul class="checklist">
+                    {% for doc in documents %}
+                        <li class="checklist-item">
+                            <input type="checkbox" id="doc-{{ loop.index }}" style="margin-top:3px; cursor:pointer; accent-color:var(--primary);">
+                            <label for="doc-{{ loop.index }}" style="cursor:pointer; flex-grow:1;">
+                                {{ doc }}
+                            </label>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- IMPORTANT WARNINGS & ADVISORIES -->
+            {% if instruction and instruction.important_notes %}
+                <div class="content-card" style="border-left:4px solid var(--warning); background:#fffdfa;">
+                    <h2 style="color:var(--warning);"><span>⚠️</span> Important Visitor Note</h2>
+                    <p style="font-size:13.5px; line-height:1.6; color:#5c4714; margin:0;">
+                        {{ instruction.important_notes }}
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- RIGHT COLUMN: REPORTING POINT, HOURS, NOTICES & MAP -->
+        <div>
+            <!-- FIRST REPORTING POINT -->
+            <div class="content-card">
+                <h2><span>📍</span> First Reporting Point</h2>
+                <p style="font-size:14px; font-weight:700; color:var(--navy); margin-bottom:6px;">
+                    {{ instruction.first_reporting_point if instruction else "Campus Reception Desk, Ground Floor, Administrative Block" }}
+                </p>
+                <p style="font-size:13px; color:var(--muted); line-height:1.5; margin-bottom:16px;">
+                    {{ department.directions or "Enter through Security Gate 1, follow main driveway to Administrative Block." }}
+                </p>
+                {% if primary_location %}
+                    <a href="{{ url_for('visitor.navigate', location_id=primary_location.id) }}" 
+                       style="display:inline-flex; align-items:center; gap:6px; font-size:13px; color:var(--primary); font-weight:700; text-decoration:none;">
+                        View Interactive Indoor Floor Plan & Walking Route →
+                    </a>
+                {% endif %}
+            </div>
+
+            <!-- VISITING HOURS & TIMINGS -->
+            <div class="content-card">
+                <h2><span>⏰</span> Official Visiting Hours</h2>
+                <div style="background:#f7f6fc; padding:14px; border-radius:10px; border:1px solid var(--border-light); margin-bottom:12px;">
+                    <p style="font-size:14px; font-weight:700; color:var(--navy); margin-bottom:4px;">
+                        {{ instruction.visiting_hours if instruction else "9:30 AM – 4:30 PM (Mon–Fri)" }}
+                    </p>
+                    <small style="color:var(--muted);">Lunch interval: 1:00 PM – 2:00 PM</small>
+                </div>
+                <p style="font-size:12px; color:var(--muted); line-height:1.5; margin:0;">
+                    Please plan to arrive at least 45 minutes prior to desk closing time for document processing.
+                </p>
+            </div>
+
+            <!-- DEPARTMENT CONTACT -->
+            <div class="content-card">
+                <h2><span>📞</span> Desk Helpline</h2>
+                <p style="font-size:13px; margin-bottom:6px;">
+                    <strong>Desk:</strong> {{ department.name }}
+                </p>
+                <p style="font-size:13px; margin-bottom:6px;">
+                    <strong>Contact:</strong> {{ department.contact_person or "Helpdesk In-charge" }}
+                </p>
+                {% if department.contact_phone %}
+                    <p style="font-size:13px; margin-bottom:6px;">
+                        <strong>Phone:</strong> <a href="tel:{{ department.contact_phone }}" style="color:var(--primary); font-weight:600;">{{ department.contact_phone }}</a>
+                    </p>
+                {% endif %}
+                {% if department.contact_email %}
+                    <p style="font-size:13px; margin:0;">
+                        <strong>Email:</strong> <a href="mailto:{{ department.contact_email }}" style="color:var(--primary); font-weight:600;">{{ department.contact_email }}</a>
+                    </p>
+                {% endif %}
+            </div>
+
+            <!-- ACTIVE NOTICES -->
+            {% if notices %}
+                <div class="content-card">
+                    <h2><span>📢</span> Active Advisories</h2>
+                    {% for notice in notices %}
+                        <div class="notice-box {{ notice.category.lower() }}" style="margin-bottom:10px;">
+                            <h5>{{ notice.title }}</h5>
+                            <p style="font-size:12px; margin-bottom:4px;">{{ notice.content }}</p>
+                            <small>{{ notice.start_date.strftime('%d %b %Y') }}</small>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <!-- BOTTOM ACTION BAR -->
+    <div style="background:white; border:1px solid var(--border); border-radius:var(--radius-md); padding:20px 28px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+        <a href="{{ url_for('visitor.home') }}" style="color:var(--primary); font-weight:600; font-size:13px; text-decoration:none;">
+            ← Back to Visit Purposes
+        </a>
+        <div style="display:flex; gap:12px; align-items:center;">
+            <span style="font-size:13px; color:var(--muted);">Ready to enter the queue?</span>
+            <a href="{{ url_for('visitor.book_token', purpose=purpose.code, dept=department.id) }}" class="primary-btn" style="width:auto; margin:0; padding:10px 20px; font-size:13px;">
+                Book Token Now →
+            </a>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

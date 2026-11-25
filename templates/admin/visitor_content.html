@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block title %}Visitor Instructions & Notices | QueueFlow Admin{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_visitor.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/visitor.css') }}">
+
+<div class="admin-visitor-wrapper">
+
+    <!-- SUB-NAVIGATION BAR -->
+    <div class="admin-subnav">
+        <a href="{{ url_for('admin.dashboard') }}" class="admin-subnav-link">
+            ← Student Dashboard
+        </a>
+        <a href="{{ url_for('admin.manage_visitors') }}" class="admin-subnav-link">
+            👥 Visitor Queues
+        </a>
+        <a href="{{ url_for('admin.manage_visitor_content') }}" class="admin-subnav-link active">
+            📑 Instructions & Notices
+        </a>
+        <a href="{{ url_for('admin.manage_campus_locations') }}" class="admin-subnav-link">
+            🗺️ Locations & Floor Plans
+        </a>
+        <a href="{{ url_for('admin.manage_locations') }}" class="admin-subnav-link">
+            🏢 Departments & Counters
+        </a>
+    </div>
+
+    <!-- HEADER TITLE -->
+    <div style="background:linear-gradient(115deg, #17152e, #312368, #5942b0); color:white; padding:28px 32px; border-radius:18px; margin-bottom:28px; box-shadow:var(--shadow-md);">
+        <span style="font-size:11px; font-weight:800; letter-spacing:1px; background:rgba(255,255,255,0.15); padding:4px 12px; border-radius:20px; display:inline-block; margin-bottom:8px;">
+            CONTENT MANAGEMENT
+        </span>
+        <h1 style="font-family:'Space Grotesk', sans-serif; font-size:26px; margin:0 0 6px;">
+            Visitor Instructions, Purposes & Campus Notices
+        </h1>
+        <p style="margin:0; color:#d8d3f5; font-size:13px;">
+            Configure institutional visit purposes, define department document checklists and procedures, and publish announcements with auto-expiry.
+        </p>
+    </div>
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(450px, 1fr)); gap:26px; margin-bottom:40px;">
+
+        <!-- 1. ADD / EDIT VISIT PURPOSE -->
+        <div class="visitor-table-card" style="padding:26px;">
+            <h3 style="font-family:'Space Grotesk'; font-size:18px; color:var(--navy); margin-top:0; margin-bottom:16px;">
+                ➕ Configure Visit Purpose
+            </h3>
+            <form method="POST" action="{{ url_for('admin.save_visitor_purpose') }}">
+                <div class="field">
+                    <label>Purpose Name *</label>
+                    <input type="text" name="name" placeholder="e.g. Hostels & Accommodation Enquiry" required>
+                </div>
+                <div class="field">
+                    <label>Code Slug (Unique URL identifier) *</label>
+                    <input type="text" name="code" placeholder="e.g. hostel-enquiry" required>
+                </div>
+                <div class="field">
+                    <label>Description</label>
+                    <textarea name="description" rows="2" placeholder="Brief summary of why visitors select this purpose..." style="width:100%; padding:10px; border:1px solid #e5e4ef; border-radius:8px; font-size:13px;"></textarea>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <div class="field">
+                        <label>Icon Emoji</label>
+                        <input type="text" name="icon" value="📋" placeholder="e.g. 🏠">
+                    </div>
+                    <div class="field">
+                        <label>Display Order</label>
+                        <input type="number" name="display_order" value="10" min="0">
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Default Department</label>
+                    <select name="default_department_id" style="width:100%; padding:10px; border:1px solid #e5e4ef; border-radius:8px; font-size:13px;">
+                        <option value="">None (Visitor chooses department)</option>
+                        {% for d in departments %}
+                            <option value="{{ d.id }}">{{ d.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="primary-btn" style="padding:11px;">
+                    Save Visit Purpose →
+                </button>
+            </form>
+        </div>
+
+        <!-- 2. PUBLISH CAMPUS ANNOUNCEMENT / NOTICE -->
+        <div class="visitor-table-card" style="padding:26px;">
+            <h3 style="font-family:'Space Grotesk'; font-size:18px; color:var(--navy); margin-top:0; margin-bottom:16px;">
+                📢 Publish Campus Notice
+            </h3>
+            <form method="POST" action="{{ url_for('admin.save_notice') }}">
+                <div class="field">
+                    <label>Notice Title *</label>
+                    <input type="text" name="title" placeholder="e.g. Admissions Verification Extension" required>
+                </div>
+                <div class="field">
+                    <label>Notice Content *</label>
+                    <textarea name="content" rows="3" placeholder="Full notice details for parents and visitors..." required style="width:100%; padding:10px; border:1px solid #e5e4ef; border-radius:8px; font-size:13px;"></textarea>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <div class="field">
+                        <label>Category</label>
+                        <select name="category" style="width:100%; padding:10px; border:1px solid #e5e4ef; border-radius:8px; font-size:13px;">
+                            <option value="General">General</option>
+                            <option value="Admissions">Admissions</option>
+                            <option value="Fees">Fees & Accounts</option>
+                            <option value="Exams">Exams</option>
+                            <option value="Advisory">Visitor Advisory</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Expiry Date (Auto-Expires)</label>
+                        <input type="date" name="expiry_date" min="{{ today.isoformat() }}">
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Target Department (Optional)</label>
+                    <select name="department_id" style="width:100%; padding:10px; border:1px solid #e5e4ef; border-radius:8px; font-size:13px;">
+                        <option value="">Campus-Wide (All Visitors)</option>
+                        {% for d in departments %}
+                            <option value="{{ d.id }}">{{ d.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="primary-btn" style="padding:11px;">
+                    Publish Notice →
+                </button>
+            </form>
+        </div>
+
+    </div>
+
+    <!-- 3. DEPARTMENT INSTRUCTIONS & CHECKLIST CONFIGURATION -->
+    <div class="visitor-table-card" style="padding:26px; margin-bottom:40px;">
+        <h3 style="font-family:'Space Grotesk'; font-size:18px; color:var(--navy); margin-top:0; margin-bottom:6px;">
+            📝 Map Department Instructions & Document Checklists
+        </h3>
+        <p style="color:var(--muted); font-size:13px; margin-bottom:20px;">
+            Multiple visit purposes can be mapped to the same department. Define custom procedure steps and checklists for each combination.
+        </p>
+
+        <form method="POST" action="{{ url_for('admin.save_visitor_instruction') }}">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+                <div class="field">
+                    <label>Select Purpose *</label>
+                    <select name="purpose_id" required style="width:100%; padding:10px; border:1px solid #e5e4ef; border-radius:8px; font-size:13px;">
+                        <option value="">Choose Visit Purpose</option>
+                        {% for p in purposes %}
+                            <option value="{{ p.id }}">{{ p.icon }} {{ p.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Select Department *</label>
+                    <select name="department_id" required style="width:100%; padding:10px; border:1px solid #e5e4ef; border-radius:8px; font-size:13px;">
+                        <option value="">Choose Department</option>
+                        {% for d in departments %}
+                            <option value="{{ d.id }}">{{ d.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="field">
+                <label>Step-by-Step Procedure (One step per line) *</label>
+                <textarea name="procedure_steps" rows="4" placeholder="Step 1: Check in at Security Gate 1&#10;Step 2: Proceed to Administrative Block Room 101&#10;Step 3: Meet desk in-charge" required style="width:100%; padding:10px; border:1px solid #e5e4ef; border-radius:8px; font-size:13px;"></textarea>
+            </div>
+
+            <div class="field">
+                <label>Required Documents Checklist (One document per line) *</label>
+                <textarea name="required_documents" rows="4" placeholder="1. Original 10th and 12th marks card&#10;2. Transfer Certificate&#10;3. Government Photo ID" required style="width:100%; padding:10px; border:1px solid #e5e4ef; border-radius:8px; font-size:13px;"></textarea>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+                <div class="field">
+                    <label>Official Visiting Hours</label>
+                    <input type="text" name="visiting_hours" placeholder="e.g. 9:30 AM – 4:30 PM (Mon–Fri)">
+                </div>
+                <div class="field">
+                    <label>First Reporting Point</label>
+                    <input type="text" name="first_reporting_point" placeholder="e.g. Reception Desk, Ground Floor, Admin Block">
+                </div>
+            </div>
+
+            <div class="field">
+                <label>Important Notes / Warning Banner</label>
+                <input type="text" name="important_notes" placeholder="e.g. Please arrive prior to 3:30 PM for same-day processing.">
+            </div>
+
+            <button type="submit" class="primary-btn" style="width:auto; padding:12px 24px;">
+                Save Instruction & Checklist →
+            </button>
+        </form>
+    </div>
+
+    <!-- 4. EXISTING NOTICES TABLE -->
+    <div class="visitor-table-card" style="margin-bottom:40px;">
+        <div style="padding:18px 24px; border-bottom:1px solid var(--border);">
+            <h3 style="font-family:'Space Grotesk'; font-size:18px; color:var(--navy); margin:0;">
+                📢 Published Campus Notices
+            </h3>
+        </div>
+        <div class="table-responsive">
+            <table class="v-table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Category</th>
+                        <th>Start Date</th>
+                        <th>Expiry Date</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for n in notices %}
+                        <tr>
+                            <td>
+                                <strong>{{ n.title }}</strong>
+                                <small style="display:block; color:var(--muted); max-width:400px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                    {{ n.content }}
+                                </small>
+                            </td>
+                            <td><span style="font-size:11px; background:#eee; padding:3px 8px; border-radius:4px;">{{ n.category }}</span></td>
+                            <td>{{ n.start_date.strftime('%d %b %Y') }}</td>
+                            <td>
+                                {% if n.expiry_date %}
+                                    <span {% if n.expiry_date < today %}style="color:#d94b61; font-weight:bold;"{% endif %}>
+                                        {{ n.expiry_date.strftime('%d %b %Y') }}
+                                        {% if n.expiry_date < today %}(Expired){% endif %}
+                                    </span>
+                                {% else %}
+                                    <span style="color:var(--muted);">No expiry</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if n.is_active and (not n.expiry_date or n.expiry_date >= today) %}
+                                    <span class="badge-status badge-approved">Active</span>
+                                {% elif not n.is_active %}
+                                    <span class="badge-status badge-completed">Inactive</span>
+                                {% else %}
+                                    <span class="badge-status badge-missed">Expired</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <form method="POST" action="{{ url_for('admin.toggle_notice', notice_id=n.id) }}">
+                                    <button type="submit" class="btn-action-sm" style="background:#555; color:white;">
+                                        {% if n.is_active %}Deactivate{% else %}Activate{% endif %}
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="6" style="text-align:center; padding:30px; color:var(--muted);">No campus notices created yet.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

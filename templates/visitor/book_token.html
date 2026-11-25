@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Book Guest Token | Canara Engineering College | QueueFlow AI{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/visitor.css') }}">
+
+<div class="page" style="padding: 35px 20px; display:flex; justify-content:center; align-items:flex-start; min-height:85vh; background:var(--background);">
+
+    <div class="auth-card" style="max-width: 580px; width: 100%; padding: 40px;">
+
+        <span class="role-label">GUEST VISITOR PASS</span>
+
+        <h1 style="font-family:'Space Grotesk', sans-serif; font-size:26px; color:var(--navy); margin-bottom:8px;">
+            Book Your Visitor Token 🎟️
+        </h1>
+        <p class="muted" style="margin-bottom:24px; font-size:13.5px;">
+            No registration or password required. Enter your contact details below to join the campus service queue at Canara Engineering College.
+        </p>
+
+        <form method="POST" action="{{ url_for('visitor.book_token') }}">
+
+            <!-- VISITOR FULL NAME -->
+            <div class="field">
+                <label for="visitor_name">Visitor Full Name *</label>
+                <input type="text" id="visitor_name" name="visitor_name" 
+                       placeholder="e.g. Ramesh Bhat" required minlength="2">
+            </div>
+
+            <!-- VISITOR MOBILE NUMBER -->
+            <div class="field">
+                <label for="visitor_phone">Mobile Number (10 Digits) *</label>
+                <input type="tel" id="visitor_phone" name="visitor_phone" 
+                       placeholder="e.g. 9876543210" required pattern="[6-9][0-9]{9}"
+                       title="Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.">
+                <small style="display:block; color:var(--muted); font-size:11px; margin-top:4px;">
+                    🔒 Kept confidential. Used solely for queue tracking and duplicate prevention.
+                </small>
+            </div>
+
+            <!-- PURPOSE SELECTION -->
+            <div class="field">
+                <label for="purpose_id">Visit Purpose *</label>
+                <select id="purpose_id" name="purpose_code" required
+                        style="width:100%; padding:13px 15px; border:1px solid #e5e4ef; background:#fafaff; border-radius:11px; font-size:14px; outline:none; color:var(--text);">
+                    <option value="">Select your visit reason</option>
+                    {% for purpose in purpose_options %}
+                        <option value="{{ purpose.value }}"
+                                {% if purpose.value == pre_purpose_value %}selected{% endif %}
+                                {% if not purpose.active %}disabled{% endif %}>
+                            {{ purpose.icon }} {{ purpose.name }}{% if not purpose.active %} (Unavailable){% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="field" id="other-purpose-field" hidden>
+                <label for="other_purpose">Please specify your visit purpose *</label>
+                <input type="text" id="other_purpose" name="other_purpose"
+                       maxlength="120" placeholder="Briefly describe your purpose">
+            </div>
+
+            <!-- DEPARTMENT SELECTION -->
+            <div class="field">
+                <label for="department_id">Campus Department / Office *</label>
+                <select id="department_id" name="department_id" required
+                        data-preselected-department="{{ pre_dept_id or '' }}"
+                        style="width:100%; padding:13px 15px; border:1px solid #e5e4ef; background:#fafaff; border-radius:11px; font-size:14px; outline:none; color:var(--text);">
+                    <option value="">Select a visit purpose first</option>
+                    {% for dept in departments %}
+                        <option value="{{ dept.id }}">
+                            🏢 {{ dept.name }} ({{ dept.building or 'Admin Block' }})
+                        </option>
+                    {% endfor %}
+                </select>
+                <small id="department-help" role="status"
+                       style="display:block; color:var(--muted); font-size:11px; margin-top:4px;">
+                    Choose a visit purpose to see the relevant departments.
+                </small>
+            </div>
+
+            <!-- VISIT DATE -->
+            <div class="field">
+                <label for="visit_date">Visit Date *</label>
+                <input type="date" id="visit_date" name="visit_date" 
+                       value="{{ today }}" min="{{ today }}" max="{{ max_date }}" required>
+            </div>
+
+            <!-- PRIORITY / ASSISTANCE SELECTION -->
+            <div class="field">
+                <label for="priority">Visitor Assistance Type</label>
+                <select id="priority" name="priority" 
+                        style="width:100%; padding:13px 15px; border:1px solid #e5e4ef; background:#fafaff; border-radius:11px; font-size:14px; outline:none; color:var(--text);">
+                    <option value="normal">Normal Queue (Standard Visitor)</option>
+                    <option value="senior_citizen">Senior Citizen / Elderly Visitor</option>
+                    <option value="accessibility">Mobility / Accessibility Assistance</option>
+                    <option value="urgent">Urgent Document Collection</option>
+                </select>
+            </div>
+
+            <!-- INFORMATION & DUPLICATE PROTECTION NOTICE -->
+            <div style="background:#f4f3fb; border-left:3px solid var(--primary); padding:12px 14px; border-radius:8px; margin-bottom:20px; font-size:12px; color:#525070; line-height:1.5;">
+                <strong>Duplicate Active Booking Protection:</strong> Only one active token is permitted per mobile number and department on a given date. If you already have an active ticket, you will be redirected to view your existing pass.
+            </div>
+
+            <button type="submit" class="primary-btn">
+                Generate Digital Token Pass →
+            </button>
+
+        </form>
+
+        <div style="margin-top:20px; text-align:center;">
+            <a href="{{ url_for('visitor.home') }}" style="color:var(--primary); font-size:13px; font-weight:600; text-decoration:none;">
+                ← Back to Visitor Portal
+            </a>
+        </div>
+
+    </div>
+
+</div>
+
+<script id="purpose-departments-data" type="application/json">
+{{ purpose_department_map|tojson }}
+</script>
+<script src="{{ url_for('static', filename='js/visitor_booking.js') }}"></script>
+{% endblock %}

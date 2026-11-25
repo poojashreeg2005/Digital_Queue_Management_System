@@ -598,9 +598,14 @@
 
             <div class="header-actions">
 
+                <a href="{{ url_for('admin.manage_visitors') }}"
+                   class="management-link" style="background:#ffd966; color:#4a3900 !important; font-weight:800;">
+                    👥 Visitor Queues &amp; Assistance
+                </a>
+
                 <a href="{{ url_for('admin.manage_locations') }}"
                    class="management-link">
-                    ⚙ Manage Departments & Counters
+                    ⚙ Manage Departments &amp; Counters
                 </a>
 
                 <a href="{{ url_for('auth.logout') }}"
@@ -728,6 +733,19 @@
 
                         <td>
                             <strong>{{ token.code }}</strong>
+                            {% if token.id in automatic_reentry_ids %}
+                                <br>
+                                <span style="color:#245b9e; font-size:12px;">
+                                    Automatic same-day re-entry
+                                </span>
+                            {% endif %}
+                            {% if token.admin_note and
+                                  token.admin_note.startswith(automatic_reentry_exception_prefix) %}
+                                <br>
+                                <span style="color:#a45a00; font-size:12px;">
+                                    {{ token.admin_note[automatic_reentry_exception_prefix|length:]|trim }}
+                                </span>
+                            {% endif %}
                         </td>
 
                         <td>
@@ -792,6 +810,17 @@
                                     Not assigned
                                 </span>
 
+                            {% endif %}
+
+                            {% if counter_recommendations.get(token.id) %}
+                                <p style="margin:9px 0;padding:9px;border-radius:8px;background:#f2efff;color:#4937ad;font-size:12px;">
+                                    <strong>Lowest-load recommendation:</strong>
+                                    {{ counter_recommendations.get(token.id).name }}
+                                </p>
+                            {% elif token.status in ["pending", "approved"] and not counter %}
+                                <p class="helper-text">
+                                    No active compatible counter is currently available.
+                                </p>
                             {% endif %}
 
                             {% if token.status == "approved" %}
@@ -1073,7 +1102,11 @@
                                     <strong>{{ new_token.code }}</strong>
                                     <br>
                                     <span class="history-new">
-                                        Rescheduled
+                                        {% if new_token.id in automatic_reentry_ids %}
+                                            Automatic same-day re-entry
+                                        {% else %}
+                                            Rescheduled
+                                        {% endif %}
                                     </span>
                                 </td>
 
@@ -1207,6 +1240,86 @@
     </section>
 
 
+    <!-- COUNTER WORKLOAD AND ALLOCATION -->
+
+    <section class="panel">
+
+        <h2>⚖ Smart Counter Workload</h2>
+
+        <p class="panel-description">
+            Workload includes approved waiting tokens and estimated remaining
+            time for called tokens on {{ selected_date }}. Inactive counters
+            are shown for visibility but are never recommended.
+        </p>
+
+        {% if counter_workloads %}
+            <div class="token-table-wrapper">
+                <table class="token-table">
+                    <thead>
+                        <tr>
+                            <th>Counter</th>
+                            <th>Availability</th>
+                            <th>Preferred priorities</th>
+                            <th>Waiting</th>
+                            <th>In service</th>
+                            <th>Current token</th>
+                            <th>Next eligible token</th>
+                            <th>Estimated workload</th>
+                            <th>Load balance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for workload in counter_workloads %}
+                            <tr>
+                                <td><strong>{{ workload.counter.name }}</strong></td>
+                                <td>
+                                    {% if workload.busy %}
+                                        Serving
+                                    {% elif workload.available %}
+                                        Available
+                                    {% else %}
+                                        Unavailable
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if workload.counter.preferred_priorities %}
+                                        {{ workload.counter.preferred_priorities|map('capitalize')|join(', ') }}
+                                    {% else %}
+                                        All priorities
+                                    {% endif %}
+                                </td>
+                                <td>{{ workload.waiting_count }}</td>
+                                <td>{{ workload.in_service_count }}</td>
+                                <td>
+                                    {% if workload.current_token %}
+                                        {{ workload.current_token.code }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if workload.next_token %}
+                                        {{ workload.next_token.code }}
+                                    {% else %}
+                                        None
+                                    {% endif %}
+                                </td>
+                                <td>{{ workload.workload_minutes }} min</td>
+                                <td>{{ workload.allocation_status|capitalize }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty">
+                <h3>No counters have been configured</h3>
+            </div>
+        {% endif %}
+
+    </section>
+
+
     <!-- COUNTER MANAGEMENT -->
 
     <section class="panel">
@@ -1214,7 +1327,8 @@
         <h2>📍 Campus Service Counters</h2>
 
         <p class="panel-description">
-            View counter locations and call the next approved student assigned to each counter.
+            An idle counter can serve the next eligible student from its department,
+            even when that student was initially assigned elsewhere.
         </p>
 
         {% if counters %}
@@ -1224,8 +1338,47 @@
                 {% for counter in counters %}
 
                     <article class="counter-card">
+                        {% set counter_state = counter_workloads|selectattr("counter_id", "equalto", counter.id)|first %}
 
                         <h3>{{ counter.name }}</h3>
+
+                        <p>
+                            <strong>Preferred priorities:</strong>
+                            {% if counter.preferred_priorities %}
+                                {{ counter.preferred_priorities|map('capitalize')|join(', ') }}
+                            {% else %}
+                                All priorities
+                            {% endif %}
+                        </p>
+
+                        <p>
+                            <strong>Availability:</strong>
+                            {% if counter_state and counter_state.busy %}
+                                Serving
+                            {% elif counter_state and counter_state.available %}
+                                Available
+                            {% else %}
+                                Unavailable
+                            {% endif %}
+                        </p>
+
+                        <p>
+                            <strong>Current token:</strong>
+                            {% if counter_state and counter_state.current_token %}
+                                {{ counter_state.current_token.code }}
+                            {% else %}
+                                None
+                            {% endif %}
+                        </p>
+
+                        <p>
+                            <strong>Next eligible token:</strong>
+                            {% if counter_state and counter_state.next_token %}
+                                {{ counter_state.next_token.code }}
+                            {% else %}
+                                None
+                            {% endif %}
+                        </p>
 
                         <p>
                             <strong>Building:</strong>
@@ -1250,8 +1403,13 @@
                         <form method="POST"
                               action="{{ url_for('admin.call_next', counter_id=counter.id) }}">
 
-                            <button type="submit" class="btn-next">
-                                Call Next Student →
+                            <button type="submit" class="btn-next"
+                                    {% if counter_state and counter_state.busy %}disabled{% endif %}>
+                                {% if counter_state and counter_state.busy %}
+                                    Counter Busy
+                                {% else %}
+                                    Call Next Student →
+                                {% endif %}
                             </button>
 
                         </form>

@@ -459,6 +459,11 @@
 
         <div>
             <a href="{{ url_for('home') }}">Home</a>
+            <a href="{{ url_for('visitor.home') }}" style="color:var(--primary); font-weight:700;">Visitor Portal</a>
+            <a href="{{ url_for('visitor.navigate') }}">Campus Map</a>
+            {% if current_user.is_authenticated and current_user.role == 'admin' %}
+                <a href="{{ url_for('admin.manage_visitors') }}" style="background:var(--primary-light); color:var(--primary-dark); font-weight:700;">Visitor Admin</a>
+            {% endif %}
             <a href="{{ url_for('auth.student_login') }}">Student</a>
             <a href="{{ url_for('auth.admin_login') }}">Admin</a>
         </div>

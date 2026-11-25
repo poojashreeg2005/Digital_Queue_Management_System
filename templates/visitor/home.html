@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Parent & Visitor Assistance | Canara Engineering College | QueueFlow AI{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/visitor.css') }}">
+
+<div class="page" style="padding: 30px 6%; display: block; min-height: auto; background: var(--background);">
+
+    <!-- INSTITUTION DEMO WATERMARK BANNER -->
+    <div class="demo-badge-banner">
+        <span>🏛️</span>
+        <div>
+            <strong>Canara Engineering College, Benjanapadavu, Bantwal, Karnataka, India</strong> — 
+            <span>Parent & Visitor Guidance Portal. <em>[Demonstration & Sample Data Mode]</em></span>
+        </div>
+    </div>
+
+    <!-- VISITOR HERO SECTION -->
+    <section class="visitor-hero">
+        <span class="visitor-hero-badge">✦ Smart Campus Navigation & Assistance</span>
+        <h1>Welcome to Canara Engineering College</h1>
+        <p>
+            We are pleased to assist parents, prospective students, and campus guests. 
+            Select your reason for visiting to view step-by-step procedures, required documents, 
+            visiting hours, and interactive campus directions — or book a guest queue token online.
+        </p>
+        <div class="visitor-hero-actions">
+            <a href="#purposes-section" class="btn-hero-primary">
+                Explore Visit Purposes ↓
+            </a>
+            <a href="{{ url_for('visitor.navigate') }}" class="btn-hero-secondary">
+                🗺️ Campus Map & Directions
+            </a>
+            <a href="{{ url_for('visitor.book_token') }}" class="btn-hero-secondary">
+                🎟️ Book a Visitor Token
+            </a>
+        </div>
+    </section>
+
+    <!-- SEARCH & FILTER -->
+    <section id="purposes-section" style="margin-bottom: 30px;">
+        <div class="section-header">
+            <div>
+                <h2 class="section-title">What is the purpose of your visit?</h2>
+                <p class="section-subtitle">Select an inquiry below to receive tailored instructions and directions before arriving.</p>
+            </div>
+            <form method="GET" action="{{ url_for('visitor.home') }}" style="display:flex; gap:8px;">
+                <input type="text" name="q" value="{{ search_query }}" placeholder="Search purpose (e.g. Admission, Fees)..." 
+                       style="padding:9px 14px; border:1px solid var(--border); border-radius:8px; font-size:13px; width:220px; outline:none;">
+                <button type="submit" class="primary-btn" style="width:auto; padding:9px 14px; margin:0; font-size:13px;">Search</button>
+                {% if search_query %}
+                    <a href="{{ url_for('visitor.home') }}" style="padding:9px 12px; background:#eee; border-radius:8px; font-size:12px; color:#555; display:flex; align-items:center;">Clear</a>
+                {% endif %}
+            </form>
+        </div>
+
+        <!-- PURPOSE CARDS GRID -->
+        <div class="purposes-grid">
+            {% for purpose in purposes %}
+                <a href="{{ url_for('visitor.purpose_select', purpose_code=purpose.code) }}" class="purpose-card">
+                    <div>
+                        <div class="purpose-icon">{{ purpose.icon or "📋" }}</div>
+                        <h3>{{ purpose.name }}</h3>
+                        <p>{{ purpose.description }}</p>
+                    </div>
+                    <div class="purpose-card-footer">
+                        <span>View Instructions & Checklist →</span>
+                    </div>
+                </a>
+            {% else %}
+                <div style="grid-column: 1 / -1; background:white; padding:30px; border-radius:12px; text-align:center; border:1px solid var(--border);">
+                    <p style="color:var(--muted); margin:0;">No visit purposes found matching "{{ search_query }}".</p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- ACTIVE CAMPUS NOTICES & VISITOR ADVISORIES -->
+    {% if notices %}
+    <section style="margin-bottom: 40px;">
+        <div class="section-header">
+            <div>
+                <h2 class="section-title">📢 Campus Announcements & Visitor Advisories</h2>
+                <p class="section-subtitle">Active guidance and notifications for visitors at Canara Engineering College.</p>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px;">
+            {% for notice in notices %}
+                <div class="notice-box {{ notice.category.lower() }}">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <span style="font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; background:rgba(0,0,0,0.06); padding:2px 7px; border-radius:4px;">
+                            {{ notice.category }}
+                        </span>
+                        <small>{{ notice.start_date.strftime('%d %b %Y') }}</small>
+                    </div>
+                    <h5>{{ notice.title }}</h5>
+                    <p>{{ notice.content }}</p>
+                    {% if notice.expiry_date %}
+                        <small>Valid through: {{ notice.expiry_date.strftime('%d %b %Y') }}</small>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- QUICK ACTIONS FOOTER BANNER -->
+    <section style="background:white; border:1px solid var(--border); border-radius:var(--radius-md); padding:24px 30px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px; box-shadow:var(--shadow-sm);">
+        <div>
+            <h3 style="font-family:'Space Grotesk', sans-serif; font-size:18px; color:var(--navy); margin-bottom:4px;">Ready to visit Canara Engineering College?</h3>
+            <p style="color:var(--muted); font-size:13px; margin:0;">Book a queue token in advance to avoid waiting at service counters.</p>
+        </div>
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+            <a href="{{ url_for('visitor.book_token') }}" class="primary-btn" style="width:auto; padding:12px 22px; margin:0; font-size:14px;">
+                Book Guest Token →
+            </a>
+            <a href="https://www.google.com/maps/dir/?api=1&destination=Canara+Engineering+College+Benjanapadavu" target="_blank" 
+               style="display:inline-flex; align-items:center; gap:6px; padding:12px 18px; background:#f4f3fb; border:1px solid var(--border); border-radius:10px; font-weight:600; font-size:13px; color:var(--navy); text-decoration:none;">
+                📍 Google Maps to Main Gate ↗
+            </a>
+        </div>
+    </section>
+
+</div>
+{% endblock %}

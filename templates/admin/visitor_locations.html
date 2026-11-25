@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block title %}Campus Locations & Floor Plans | QueueFlow Admin{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_visitor.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/visitor.css') }}">
+
+<div class="admin-visitor-wrapper">
+
+    <!-- SUB-NAVIGATION BAR -->
+    <div class="admin-subnav">
+        <a href="{{ url_for('admin.dashboard') }}" class="admin-subnav-link">
+            ← Student Dashboard
+        </a>
+        <a href="{{ url_for('admin.manage_visitors') }}" class="admin-subnav-link">
+            👥 Visitor Queues
+        </a>
+        <a href="{{ url_for('admin.manage_visitor_content') }}" class="admin-subnav-link">
+            📑 Instructions & Notices
+        </a>
+        <a href="{{ url_for('admin.manage_campus_locations') }}" class="admin-subnav-link active">
+            🗺️ Locations & Floor Plans
+        </a>
+        <a href="{{ url_for('admin.manage_locations') }}" class="admin-subnav-link">
+            🏢 Departments & Counters
+        </a>
+    </div>
+
+    <!-- HEADER TITLE -->
+    <div style="background:linear-gradient(115deg, #17152e, #312368, #5942b0); color:white; padding:28px 32px; border-radius:18px; margin-bottom:28px; box-shadow:var(--shadow-md);">
+        <span style="font-size:11px; font-weight:800; letter-spacing:1px; background:rgba(255,255,255,0.15); padding:4px 12px; border-radius:20px; display:inline-block; margin-bottom:8px;">
+            CAMPUS WAYFINDING CONFIGURATION
+        </span>
+        <h1 style="font-family:'Space Grotesk', sans-serif; font-size:26px; margin:0 0 6px;">
+            Campus Map Locations & Indoor Floor Plans
+        </h1>
+        <p style="margin:0; color:#d8d3f5; font-size:13px;">
+            Configure OpenStreetMap GPS coordinates for outdoor landmarks and register indoor floor plans with percentage-based marker coordinates.
+        </p>
+    </div>
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(450px, 1fr)); gap:26px; margin-bottom:40px;">
+
+        <!-- 1. ADD / EDIT CAMPUS LOCATION -->
+        <div class="visitor-table-card" style="padding:26px;">
+            <h3 style="font-family:'Space Grotesk'; font-size:18px; color:var(--navy); margin-top:0; margin-bottom:16px;">
+                📍 Register Campus Location Marker
+            </h3>
+            <form method="POST" action="{{ url_for('admin.save_campus_location') }}">
+                <div class="field">
+                    <label>Location / Room Name *</label>
+                    <input type="text" name="name" placeholder="e.g. Accounts & Fees Counter" required>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1.5fr 1fr 1fr; gap:10px;">
+                    <div class="field">
+                        <label>Building *</label>
+                        <input type="text" name="building" placeholder="e.g. Administrative Block" required>
+                    </div>
+                    <div class="field">
+                        <label>Floor *</label>
+                        <input type="text" name="floor" placeholder="e.g. Ground Floor" required>
+                    </div>
+                    <div class="field">
+                        <label>Room No.</label>
+                        <input type="text" name="room" placeholder="e.g. Room 102">
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <div class="field">
+                        <label>Associated Department</label>
+                        <select name="department_id" style="width:100%; padding:10px; border:1px solid #e5e4ef; border-radius:8px; font-size:13px;">
+                            <option value="">None / General Landmark</option>
+                            {% for d in departments %}
+                                <option value="{{ d.id }}">{{ d.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Associated Counter</label>
+                        <select name="counter_id" style="width:100%; padding:10px; border:1px solid #e5e4ef; border-radius:8px; font-size:13px;">
+                            <option value="">None / Helpdesk</option>
+                            {% for c in counters %}
+                                <option value="{{ c.id }}">{{ c.name }} (Dept #{{ c.department_id }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div style="background:#fcfbff; border:1px solid var(--border-light); padding:14px; border-radius:10px; margin-bottom:16px;">
+                    <strong style="display:block; font-size:12px; color:var(--primary); margin-bottom:8px;">Outdoor OpenStreetMap GPS Coordinates</strong>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <div>
+                            <label style="font-size:11px; color:var(--muted);">Latitude</label>
+                            <input type="number" step="any" name="latitude" placeholder="e.g. 12.8797" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:12px;">
+                        </div>
+                        <div>
+                            <label style="font-size:11px; color:var(--muted);">Longitude</label>
+                            <input type="number" step="any" name="longitude" placeholder="e.g. 74.9872" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:12px;">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background:#fcfbff; border:1px solid var(--border-light); padding:14px; border-radius:10px; margin-bottom:16px;">
+                    <strong style="display:block; font-size:12px; color:var(--primary); margin-bottom:8px;">Indoor Floor Plan Coordinates</strong>
+                    <div class="field" style="margin-bottom:8px;">
+                        <label style="font-size:11px; color:var(--muted);">Linked Floor Plan</label>
+                        <select name="floor_plan_id" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:12px;">
+                            <option value="">No indoor plan (Outdoor only)</option>
+                            {% for fp in floor_plans %}
+                                <option value="{{ fp.id }}">{{ fp.building }} ({{ fp.floor }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <div>
+                            <label style="font-size:11px; color:var(--muted);">Marker X (0 - 100%)</label>
+                            <input type="number" step="0.1" name="marker_x" placeholder="e.g. 13.5" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:12px;">
+                        </div>
+                        <div>
+                            <label style="font-size:11px; color:var(--muted);">Marker Y (0 - 100%)</label>
+                            <input type="number" step="0.1" name="marker_y" placeholder="e.g. 62.0" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:12px;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>Walking Directions</label>
+                    <textarea name="directions" rows="2" placeholder="e.g. Enter main gate, proceed left along corridor to Room 102." style="width:100%; padding:10px; border:1px solid #e5e4ef; border-radius:8px; font-size:13px;"></textarea>
+                </div>
+
+                <button type="submit" class="primary-btn" style="padding:11px;">
+                    Save Campus Location →
+                </button>
+            </form>
+        </div>
+
+        <!-- 2. REGISTER / UPLOAD INDOOR FLOOR PLAN -->
+        <div class="visitor-table-card" style="padding:26px;">
+            <h3 style="font-family:'Space Grotesk'; font-size:18px; color:var(--navy); margin-top:0; margin-bottom:16px;">
+                🏢 Register Indoor Floor Plan
+            </h3>
+            <form method="POST" action="{{ url_for('admin.save_floor_plan') }}" enctype="multipart/form-data">
+                <div class="field">
+                    <label>Building Name *</label>
+                    <input type="text" name="building" placeholder="e.g. Administrative Block" required>
+                </div>
+                <div class="field">
+                    <label>Floor Level *</label>
+                    <input type="text" name="floor" placeholder="e.g. Ground Floor or 1st Floor" required>
+                </div>
+                <div class="field">
+                    <label>Floor Plan Title *</label>
+                    <input type="text" name="title" placeholder="e.g. Admin Block Ground Floor Layout" required>
+                </div>
+                <div class="field">
+                    <label>Upload Image / Blueprint (Optional, .png, .jpg, .svg)</label>
+                    <input type="file" name="image_file" accept=".png,.jpg,.jpeg,.svg" style="font-size:13px;">
+                    <small style="display:block; color:var(--muted); font-size:11px; margin-top:4px;">
+                        If left empty, system uses interactive vector SVG layout.
+                    </small>
+                </div>
+                <div class="field">
+                    <label>Description / Notes</label>
+                    <textarea name="description" rows="3" placeholder="Notes on rooms covered in this floor plan..." style="width:100%; padding:10px; border:1px solid #e5e4ef; border-radius:8px; font-size:13px;"></textarea>
+                </div>
+                <button type="submit" class="primary-btn" style="padding:11px;">
+                    Register Floor Plan →
+                </button>
+            </form>
+        </div>
+
+    </div>
+
+    <!-- 3. EXISTING CAMPUS LOCATIONS TABLE -->
+    <div class="visitor-table-card">
+        <div style="padding:18px 24px; border-bottom:1px solid var(--border);">
+            <h3 style="font-family:'Space Grotesk'; font-size:18px; color:var(--navy); margin:0;">
+                📍 Registered Campus Locations & Waypoints
+            </h3>
+        </div>
+        <div class="table-responsive">
+            <table class="v-table">
+                <thead>
+                    <tr>
+                        <th>Location Name</th>
+                        <th>Building & Floor</th>
+                        <th>Room</th>
+                        <th>GPS Coordinates</th>
+                        <th>Floor Plan Marker</th>
+                        <th>Demo Tag</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for loc in locations %}
+                        <tr>
+                            <td><strong>{{ loc.name }}</strong></td>
+                            <td>{{ loc.building }} ({{ loc.floor }})</td>
+                            <td>{{ loc.room or "—" }}</td>
+                            <td>
+                                {% if loc.latitude and loc.longitude %}
+                                    <span style="font-family:monospace; font-size:11px; background:#eee; padding:2px 6px; border-radius:4px;">
+                                        {{ loc.latitude }}, {{ loc.longitude }}
+                                    </span>
+                                {% else %}
+                                    <span style="color:var(--muted);">None</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if loc.marker_x and loc.marker_y %}
+                                    <span style="color:var(--primary); font-size:12px; font-weight:bold;">
+                                        X: {{ loc.marker_x }}% · Y: {{ loc.marker_y }}%
+                                    </span>
+                                {% else %}
+                                    <span style="color:var(--muted); font-size:12px;">No marker</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if loc.is_demo %}
+                                    <span style="font-size:10px; background:#fff3cd; color:#856404; padding:2px 7px; border-radius:4px; font-weight:bold;">
+                                        DEMO DATA
+                                    </span>
+                                {% else %}
+                                    <span style="color:#28a745; font-size:11px; font-weight:bold;">Live Verified</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="6" style="text-align:center; padding:30px; color:var(--muted);">No campus locations registered yet.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

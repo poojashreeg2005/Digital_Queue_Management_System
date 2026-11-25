@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Select Department | {{ purpose.name }} | QueueFlow AI{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/visitor.css') }}">
+
+<div class="page" style="padding: 30px 6%; display: block; min-height: auto; background: var(--background);">
+
+    <!-- BREADCRUMBS STEPPER -->
+    <div class="visitor-stepper">
+        <a href="{{ url_for('visitor.home') }}" class="step-item">
+            <span class="step-num">1</span> Home
+        </a>
+        <span class="step-separator">›</span>
+        <span class="step-item active">
+            <span class="step-num">2</span> Select Department
+        </span>
+        <span class="step-separator">›</span>
+        <span class="step-item">
+            <span class="step-num">3</span> Instructions & Checklist
+        </span>
+        <span class="step-separator">›</span>
+        <span class="step-item">
+            <span class="step-num">4</span> Token & Navigation
+        </span>
+    </div>
+
+    <div style="max-width:800px; margin:0 auto 35px; text-align:center;">
+        <div class="purpose-icon" style="margin:0 auto 15px; width:56px; height:56px; font-size:28px;">
+            {{ purpose.icon or "📋" }}
+        </div>
+        <h1 style="font-family:'Space Grotesk', sans-serif; font-size:28px; color:var(--navy); margin-bottom:8px;">
+            {{ purpose.name }}
+        </h1>
+        <p style="color:var(--muted); font-size:14px; line-height:1.6;">
+            {{ purpose.description }}
+        </p>
+        <p style="font-weight:700; font-size:13px; color:var(--primary); margin-top:14px;">
+            Please select the department handling your specific inquiry:
+        </p>
+    </div>
+
+    <div style="max-width:800px; margin:0 auto 40px; display:grid; gap:16px;">
+        {% for dept in departments %}
+            <a href="{{ url_for('visitor.instructions', purpose_code=purpose.code, department_id=dept.id) }}"
+               style="background:white; border:1px solid var(--border); border-radius:14px; padding:22px 25px; display:flex; justify-content:space-between; align-items:center; text-decoration:none; color:inherit; box-shadow:var(--shadow-sm); transition:all 0.2s ease;">
+                <div>
+                    <h3 style="font-family:'Space Grotesk', sans-serif; font-size:17px; color:var(--navy); margin-bottom:6px;">
+                        🏢 {{ dept.name }}
+                    </h3>
+                    <p style="margin:0; font-size:13px; color:var(--muted);">
+                        Location: {{ dept.building or "Administrative Block" }} · {{ dept.floor or "Ground Floor" }}
+                        {% if dept.room %} · {{ dept.room }}{% endif %}
+                    </p>
+                </div>
+                <span class="primary-btn" style="width:auto; margin:0; padding:10px 18px; font-size:13px;">
+                    Select Department →
+                </span>
+            </a>
+        {% endfor %}
+    </div>
+
+    <div style="text-align:center;">
+        <a href="{{ url_for('visitor.home') }}" style="color:var(--primary); font-weight:600; font-size:13px; text-decoration:none;">
+            ← Back to All Visit Purposes
+        </a>
+    </div>
+
+</div>
+{% endblock %}

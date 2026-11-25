@@ -1,0 +1,316 @@
+{% extends "base.html" %}
+
+{% block title %}Visitor Queue Management | QueueFlow Admin{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_visitor.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/visitor.css') }}">
+
+<div class="admin-visitor-wrapper">
+
+    <!-- SUB-NAVIGATION BAR FOR VISITOR ADMIN SECTIONS -->
+    <div class="admin-subnav">
+        <a href="{{ url_for('admin.dashboard') }}" class="admin-subnav-link">
+            ← Student Dashboard
+        </a>
+        <a href="{{ url_for('admin.manage_visitors') }}" class="admin-subnav-link active">
+            👥 Visitor Queues
+        </a>
+        <a href="{{ url_for('admin.manage_visitor_content') }}" class="admin-subnav-link">
+            📑 Instructions & Notices
+        </a>
+        <a href="{{ url_for('admin.manage_campus_locations') }}" class="admin-subnav-link">
+            🗺️ Locations & Floor Plans
+        </a>
+        <a href="{{ url_for('admin.manage_locations') }}" class="admin-subnav-link">
+            🏢 Departments & Counters
+        </a>
+    </div>
+
+    <!-- HEADER TITLE & CALL NEXT QUICK ACTION -->
+    <div style="background:linear-gradient(115deg, #17152e, #312368, #5942b0); color:white; padding:28px 32px; border-radius:18px; margin-bottom:24px; box-shadow:var(--shadow-md); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px;">
+        <div>
+            <span style="font-size:11px; font-weight:800; letter-spacing:1px; background:rgba(255,255,255,0.15); padding:4px 12px; border-radius:20px; display:inline-block; margin-bottom:8px;">
+                ADMINISTRATOR CONSOLE
+            </span>
+            <h1 style="font-family:'Space Grotesk', sans-serif; font-size:26px; margin:0 0 6px;">
+                Parent & Visitor Queue Management
+            </h1>
+            <p style="margin:0; color:#d8d3f5; font-size:13px;">
+                Review incoming guest bookings, verify senior citizen/mobility requests, assign counters, and call next visitors.
+            </p>
+        </div>
+
+        <!-- QUICK CALL NEXT VISITOR FORM -->
+        <div style="background:rgba(255,255,255,0.1); backdrop-filter:blur(10px); padding:16px 20px; border-radius:12px; border:1px solid rgba(255,255,255,0.2);">
+            <form method="POST" action="{{ url_for('admin.call_next_visitor') }}" style="display:flex; gap:10px; align-items:center;">
+                <div>
+                    <label style="display:block; font-size:11px; font-weight:bold; color:#eae6ff; margin-bottom:4px;">CALL NEXT VISITOR AT:</label>
+                    <select name="counter_id" required style="padding:8px 12px; border-radius:8px; border:none; font-size:12px; background:white; color:#333;">
+                        <option value="">Select Counter Desk</option>
+                        {% for c in counters %}
+                            <option value="{{ c.id }}">{{ c.name }} (Dept #{{ c.department_id }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="primary-btn" style="width:auto; margin:16px 0 0; padding:9px 18px; font-size:12px; background:#16865a;">
+                    📢 Call Next →
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- METRICS SUMMARY ROW -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:14px; margin-bottom:24px;">
+        <div style="background:white; border:1px solid var(--border); border-radius:12px; padding:16px; text-align:center;">
+            <small style="color:var(--muted); font-size:11px; font-weight:bold; text-transform:uppercase;">Total Today</small>
+            <div style="font-size:24px; font-weight:800; color:var(--navy); font-family:'Space Grotesk';">{{ stats.total }}</div>
+        </div>
+        <div style="background:white; border:1px solid #ffeeba; border-radius:12px; padding:16px; text-align:center;">
+            <small style="color:#856404; font-size:11px; font-weight:bold; text-transform:uppercase;">Pending Review</small>
+            <div style="font-size:24px; font-weight:800; color:#856404; font-family:'Space Grotesk';">{{ stats.pending }}</div>
+        </div>
+        <div style="background:white; border:1px solid #c3e6cb; border-radius:12px; padding:16px; text-align:center;">
+            <small style="color:#155724; font-size:11px; font-weight:bold; text-transform:uppercase;">Approved Waiting</small>
+            <div style="font-size:24px; font-weight:800; color:#155724; font-family:'Space Grotesk';">{{ stats.approved }}</div>
+        </div>
+        <div style="background:white; border:1px solid #b8daff; border-radius:12px; padding:16px; text-align:center;">
+            <small style="color:#004085; font-size:11px; font-weight:bold; text-transform:uppercase;">Now Serving</small>
+            <div style="font-size:24px; font-weight:800; color:#004085; font-family:'Space Grotesk';">{{ stats.called }}</div>
+        </div>
+        <div style="background:white; border:1px solid var(--border); border-radius:12px; padding:16px; text-align:center;">
+            <small style="color:#555; font-size:11px; font-weight:bold; text-transform:uppercase;">Completed</small>
+            <div style="font-size:24px; font-weight:800; color:#28a745; font-family:'Space Grotesk';">{{ stats.completed }}</div>
+        </div>
+        <div style="background:white; border:1px solid #f5c6cb; border-radius:12px; padding:16px; text-align:center;">
+            <small style="color:#721c24; font-size:11px; font-weight:bold; text-transform:uppercase;">Declined / Missed</small>
+            <div style="font-size:24px; font-weight:800; color:#721c24; font-family:'Space Grotesk';">{{ stats.declined + stats.missed }}</div>
+        </div>
+        {% if stats.priority_pending > 0 %}
+        <div style="background:#fff3cd; border:2px solid #ffc107; border-radius:12px; padding:16px; text-align:center;">
+            <small style="color:#856404; font-size:11px; font-weight:bold; text-transform:uppercase;">Priority Needs Review</small>
+            <div style="font-size:24px; font-weight:800; color:#d39e00; font-family:'Space Grotesk';">{{ stats.priority_pending }}</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- FILTER BAR -->
+    <form method="GET" action="{{ url_for('admin.manage_visitors') }}" class="filter-bar">
+        <div class="filter-group">
+            <label>Visit Date</label>
+            <input type="date" name="date" value="{{ selected_date }}" class="filter-control" onchange="this.form.submit()">
+        </div>
+
+        <div class="filter-group">
+            <label>Status</label>
+            <select name="status" class="filter-control" onchange="this.form.submit()">
+                <option value="">All Statuses</option>
+                <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approved</option>
+                <option value="called" {% if status_filter == 'called' %}selected{% endif %}>Called (Serving)</option>
+                <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+                <option value="declined" {% if status_filter == 'declined' %}selected{% endif %}>Declined</option>
+                <option value="missed" {% if status_filter == 'missed' %}selected{% endif %}>Missed</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label>Department</label>
+            <select name="department_id" class="filter-control" onchange="this.form.submit()">
+                <option value="">All Departments</option>
+                {% for d in departments %}
+                    <option value="{{ d.id }}" {% if dept_filter == d.id %}selected{% endif %}>{{ d.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label>Purpose</label>
+            <select name="purpose_id" class="filter-control" onchange="this.form.submit()">
+                <option value="">All Purposes</option>
+                {% for p in purposes %}
+                    <option value="{{ p.id }}" {% if purpose_filter == p.id %}selected{% endif %}>{{ p.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-group" style="flex-grow:1; min-width:200px;">
+            <label>Search Token / Name / Phone</label>
+            <div style="display:flex; gap:6px;">
+                <input type="text" name="q" value="{{ search_q }}" placeholder="Search code, name, phone..." class="filter-control" style="width:100%;">
+                <button type="submit" class="filter-control" style="background:var(--primary); color:white; border:none; cursor:pointer; font-weight:bold;">Filter</button>
+            </div>
+        </div>
+
+        {% if status_filter or dept_filter or purpose_filter or search_q or selected_date %}
+            <div class="filter-group" style="align-self:flex-end;">
+                <a href="{{ url_for('admin.manage_visitors') }}" style="font-size:12px; color:var(--muted); text-decoration:underline;">Reset Filters</a>
+            </div>
+        {% endif %}
+    </form>
+
+    <!-- VISITOR TOKENS DATA TABLE -->
+    <div class="visitor-table-card">
+        <div class="table-responsive">
+            <table class="v-table">
+                <thead>
+                    <tr>
+                        <th>Token Code</th>
+                        <th>Visitor Details</th>
+                        <th>Purpose & Department</th>
+                        <th>Assigned Counter</th>
+                        <th>Assistance / Priority</th>
+                        <th>Status</th>
+                        <th>Time Booked</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for token, purpose, department, counter in visitor_records %}
+                        <tr>
+                            <!-- TOKEN CODE -->
+                            <td>
+                                <strong style="font-family:'Space Grotesk'; font-size:14px; color:var(--primary);">
+                                    {{ token.token_code }}
+                                </strong>
+                            </td>
+
+                            <!-- VISITOR INFO -->
+                            <td>
+                                <strong style="display:block; color:var(--navy);">{{ token.visitor_name }}</strong>
+                                <span style="font-size:12px; color:var(--muted);">📞 {{ token.visitor_phone }}</span>
+                            </td>
+
+                            <!-- PURPOSE & DEPT -->
+                            <td>
+                                <span style="font-weight:600; color:var(--navy);">{{ purpose.icon }} {{ purpose.name }}</span>
+                                <small style="display:block; color:var(--muted);">{{ department.name }}</small>
+                            </td>
+
+                            <!-- ASSIGNED COUNTER -->
+                            <td>
+                                {% if counter %}
+                                    <strong style="color:#16865a;">{{ counter.name }}</strong>
+                                    <small style="display:block; color:var(--muted);">{{ counter.room or counter.floor }}</small>
+                                {% elif token.status == 'approved' %}
+                                    <!-- Inline Quick Assign Form -->
+                                    <form method="POST" action="{{ url_for('admin.assign_visitor_counter', token_id=token.id) }}" style="display:flex; gap:4px;">
+                                        <select name="counter_id" required style="font-size:11px; padding:4px 6px; border-radius:5px; border:1px solid #ccc; max-width:130px;">
+                                            <option value="">Assign Counter</option>
+                                            {% for c in counters %}
+                                                {% if c.department_id == token.department_id %}
+                                                    <option value="{{ c.id }}">{{ c.name }}</option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                        <button type="submit" class="btn-action-sm btn-approve" style="padding:4px 7px;">Save</button>
+                                    </form>
+                                {% else %}
+                                    <span style="color:var(--muted); font-size:12px;">Not assigned</span>
+                                {% endif %}
+                            </td>
+
+                            <!-- PRIORITY -->
+                            <td>
+                                {% if token.priority != 'normal' %}
+                                    <div style="margin-bottom:4px;">
+                                        <span style="background:#fff3cd; color:#856404; padding:3px 8px; border-radius:12px; font-size:11px; font-weight:bold;">
+                                            {{ token.priority|replace('_', ' ')|capitalize }}
+                                        </span>
+                                    </div>
+                                    {% if not token.priority_verified %}
+                                        <div style="display:flex; gap:4px;">
+                                            <form method="POST" action="{{ url_for('admin.verify_visitor_priority', token_id=token.id) }}">
+                                                <input type="hidden" name="decision" value="verify">
+                                                <button type="submit" class="btn-action-sm btn-approve" style="font-size:10px; padding:3px 6px;">✓ Verify</button>
+                                            </form>
+                                            <form method="POST" action="{{ url_for('admin.verify_visitor_priority', token_id=token.id) }}">
+                                                <input type="hidden" name="decision" value="reject">
+                                                <button type="submit" class="btn-action-sm btn-decline" style="font-size:10px; padding:3px 6px;">✕ Reject</button>
+                                            </form>
+                                        </div>
+                                    {% else %}
+                                        <small style="color:#28a745; font-weight:bold;">✓ Verified</small>
+                                    {% endif %}
+                                {% else %}
+                                    <span style="color:var(--muted); font-size:12px;">Normal</span>
+                                {% endif %}
+                            </td>
+
+                            <!-- STATUS -->
+                            <td>
+                                <span class="badge-status badge-{{ token.status.lower() }}">
+                                    {{ token.status }}
+                                </span>
+                            </td>
+
+                            <!-- CREATED AT -->
+                            <td>
+                                <span style="font-size:12px; color:var(--muted);">
+                                    {{ token.created_at.strftime('%I:%M %p') if token.created_at else '' }}
+                                </span>
+                            </td>
+
+                            <!-- ACTIONS -->
+                            <td>
+                                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                                    {% if token.status == 'pending' %}
+                                        <form method="POST" action="{{ url_for('admin.visitor_token_action', token_id=token.id) }}">
+                                            <input type="hidden" name="action" value="approve">
+                                            <button type="submit" class="btn-action-sm btn-approve">✓ Approve</button>
+                                        </form>
+
+                                        <!-- Decline Form Toggle -->
+                                        <button type="button" class="btn-action-sm btn-decline" 
+                                                onclick="const f = document.getElementById('decline-{{ token.id }}'); f.style.display = f.style.display === 'none' ? 'block' : 'none';">
+                                            ✕ Decline
+                                        </button>
+                                    {% elif token.status == 'approved' %}
+                                        <form method="POST" action="{{ url_for('admin.visitor_token_action', token_id=token.id) }}">
+                                            <input type="hidden" name="action" value="call">
+                                            <button type="submit" class="btn-action-sm btn-call">📢 Call</button>
+                                        </form>
+
+                                        <button type="button" class="btn-action-sm btn-decline" 
+                                                onclick="const f = document.getElementById('decline-{{ token.id }}'); f.style.display = f.style.display === 'none' ? 'block' : 'none';">
+                                            ✕ Decline
+                                        </button>
+                                    {% elif token.status == 'called' %}
+                                        <form method="POST" action="{{ url_for('admin.visitor_token_action', token_id=token.id) }}">
+                                            <input type="hidden" name="action" value="complete">
+                                            <button type="submit" class="btn-action-sm btn-complete">✓ Complete</button>
+                                        </form>
+
+                                        <form method="POST" action="{{ url_for('admin.visitor_token_action', token_id=token.id) }}">
+                                            <input type="hidden" name="action" value="missed">
+                                            <button type="submit" class="btn-action-sm" style="background:#ffc107; color:#212529;">Missed</button>
+                                        </form>
+                                    {% else %}
+                                        <span style="font-size:11px; color:var(--muted);">Resolved</span>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Inline Decline Reason Drawer -->
+                                <div id="decline-{{ token.id }}" style="display:none; margin-top:8px; background:#fff0f2; border:1px solid #ffd9de; padding:8px; border-radius:6px;">
+                                    <form method="POST" action="{{ url_for('admin.visitor_token_action', token_id=token.id) }}">
+                                        <input type="hidden" name="action" value="decline">
+                                        <input type="text" name="note" placeholder="Reason for declining..." required style="width:100%; font-size:11px; padding:4px 6px; margin-bottom:4px; border:1px solid #ccc; border-radius:4px;">
+                                        <button type="submit" class="btn-action-sm btn-decline" style="width:100%; justify-content:center;">Confirm Decline</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="8" style="text-align:center; padding:40px; color:var(--muted);">
+                                No visitor token bookings found matching your selected criteria.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

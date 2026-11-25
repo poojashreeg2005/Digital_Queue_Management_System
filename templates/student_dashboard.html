@@ -632,6 +632,22 @@
         background: var(--purple-dark);
     }
 
+    .date-reschedule-controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: 10px;
+    }
+
+    .date-reschedule-controls input {
+        flex: 0 1 270px;
+        margin: 0;
+    }
+
+    .date-reschedule-controls button {
+        margin-top: 0;
+    }
+
     /* NOTIFICATIONS */
 
     .notification-list {
@@ -1252,6 +1268,12 @@ body {
 
                             {% endif %}
 
+                            {% if token.id in automatic_reentry_ids %}
+                                <span style="display:inline-block;background:#eaf3ff;color:#245b9e;padding:6px 10px;border-radius:20px;font-size:12px;font-weight:600;">
+                                    Automatic same-day re-entry
+                                </span>
+                            {% endif %}
+
 
                             <!-- STATUS MESSAGE -->
 
@@ -1272,7 +1294,7 @@ body {
                                 {% if token.status == "called" %}
 
                                     📢 Your token has been called!
-                                    Please proceed to your assigned counter.
+                                    Please proceed to your assigned counter within 2 minutes.
 
                                 {% elif token.status == "pending" %}
 
@@ -1338,6 +1360,37 @@ body {
                             {% endif %}
 
 
+                            {% if token.status in ["pending", "approved"] %}
+
+                                <form method="POST"
+                                      action="{{ url_for('student.reschedule_active_token', token_id=token.id) }}"
+                                      class="reschedule-form"
+                                      data-active-date-reschedule-form>
+
+                                    <label for="new-visit-date-{{ token.id }}">
+                                        New Visit Date
+                                    </label>
+
+                                    <div class="date-reschedule-controls">
+                                        <input
+                                            type="date"
+                                            id="new-visit-date-{{ token.id }}"
+                                            name="visit_date"
+                                            min="{{ today_date }}"
+                                            max="{{ max_visit_date }}"
+                                            required
+                                        >
+
+                                        <button type="submit">
+                                            Reschedule
+                                        </button>
+                                    </div>
+
+                                </form>
+
+                            {% endif %}
+
+
                             <!-- QUEUE POSITION -->
 
                             {% if token.status == "approved" and counter %}
@@ -1357,9 +1410,13 @@ body {
                                     </div>
 
                                     <div class="queue-box">
-                                        <small>Estimated Service Time</small>
-                                        <strong>
-                                            {{ service.estimated_minutes }} min
+                                        <small>Estimated Waiting Time</small>
+                                        <strong data-waiting-time>
+                                            {% if waiting_estimates.get(token.id) %}
+                                                {{ waiting_estimates.get(token.id).label }}
+                                            {% else %}
+                                                {{ service.estimated_minutes }} min
+                                            {% endif %}
                                         </strong>
                                     </div>
 
@@ -1431,6 +1488,20 @@ body {
                                     Counter assignment is pending. Please check again later.
                                 </p>
 
+                            {% endif %}
+
+                            {% if not counter and token.status in ["pending", "approved"] %}
+                                <p data-counter-recommendation
+                                   style="margin-top:12px;padding:12px 14px;border-radius:10px;background:#f2efff;color:#4937ad;">
+                                    {% if counter_recommendations.get(token.id) %}
+                                        Suggested counter:
+                                        <strong>{{ counter_recommendations.get(token.id).name }}</strong>
+                                        · subject to administrator approval.
+                                    {% else %}
+                                        No active compatible counter is available yet.
+                                        The administrator can assign one when available.
+                                    {% endif %}
+                                </p>
                             {% endif %}
 
                         </article>
@@ -1572,7 +1643,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const statusMessages = {
         pending: "⏳ Your booking is awaiting administrator approval.",
         approved: "✓ Your token is approved. Please check your counter and queue position below.",
-        called: "📢 Your token has been called! Please proceed to your assigned counter.",
+        called: "📢 Your token has been called! Please proceed to your assigned counter within 2 minutes.",
         completed: "✓ Your service has been marked as completed.",
         missed: "Your token was marked as missed.",
         declined: "Your booking was declined."
@@ -1710,6 +1781,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
         }
 
+        const activeDateRescheduleForm = card.querySelector(
+            "[data-active-date-reschedule-form]"
+        );
+        if (
+            !["pending", "approved"].includes(token.status)
+            && activeDateRescheduleForm
+        ) {
+            activeDateRescheduleForm.remove();
+        }
+
         let queueInfo = card.querySelector(".queue-info");
 
         if (token.status === "approved" && token.has_counter) {
@@ -1731,6 +1812,15 @@ document.addEventListener("DOMContentLoaded", function () {
                 box.appendChild(position);
                 queueInfo.appendChild(box);
 
+                const waitingBox = createElement("div", "queue-box");
+                waitingBox.appendChild(
+                    createElement("small", "", "Estimated Waiting Time")
+                );
+                const waitingTime = createElement("strong");
+                waitingTime.setAttribute("data-waiting-time", "");
+                waitingBox.appendChild(waitingTime);
+                queueInfo.appendChild(waitingBox);
+
                 card.appendChild(queueInfo);
             }
 
@@ -1744,10 +1834,51 @@ document.addEventListener("DOMContentLoaded", function () {
                     : "Awaiting";
             }
 
+            const waitingTime = queueInfo.querySelector(
+                "[data-waiting-time]"
+            );
+            if (waitingTime) {
+                waitingTime.textContent =
+                    token.waiting_estimate
+                        ? token.waiting_estimate.label
+                        : "Unavailable";
+            }
+
         } else if (queueInfo) {
 
             queueInfo.remove();
 
+        }
+
+        let recommendation = card.querySelector(
+            "[data-counter-recommendation]"
+        );
+
+        if (
+            !token.has_counter
+            && ["pending", "approved"].includes(token.status)
+        ) {
+            if (!recommendation) {
+                recommendation = createElement("p", "", "");
+                recommendation.setAttribute(
+                    "data-counter-recommendation",
+                    ""
+                );
+                recommendation.style.marginTop = "12px";
+                recommendation.style.padding = "12px 14px";
+                recommendation.style.borderRadius = "10px";
+                recommendation.style.background = "#f2efff";
+                recommendation.style.color = "#4937ad";
+                banner.insertAdjacentElement("afterend", recommendation);
+            }
+
+            recommendation.textContent = token.recommended_counter_name
+                ? "Suggested counter: " + token.recommended_counter_name
+                    + " · subject to administrator approval."
+                : "No active compatible counter is available yet. "
+                    + "The administrator can assign one when available.";
+        } else if (recommendation) {
+            recommendation.remove();
         }
 
         let counterDetails = card.querySelector(
@@ -1957,6 +2088,19 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
             const data = await response.json();
+
+            const knownTokenIds = new Set(
+                Array.from(document.querySelectorAll("[data-token-id]"))
+                    .map(function (card) {
+                        return card.getAttribute("data-token-id");
+                    })
+            );
+            if (data.tokens.some(function (token) {
+                return !knownTokenIds.has(String(token.id));
+            })) {
+                window.location.reload();
+                return;
+            }
 
             data.tokens.forEach(updateToken);
 

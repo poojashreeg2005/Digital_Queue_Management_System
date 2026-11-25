@@ -11,3 +11,7 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    ML_WAITING_TIME_ENABLED = os.getenv(
+        "ML_WAITING_TIME_ENABLED",
+        "true"
+    ).lower() in ("1", "true", "yes", "on")

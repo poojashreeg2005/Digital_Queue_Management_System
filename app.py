@@ -11,11 +11,14 @@ from models import db, User
 from routes.auth import auth_bp
 from routes.student import student_bp
 from routes.admin import admin_bp
+from routes.visitor import visitor_bp
 
 app = Flask(__name__)
 
 # Load application configuration
 app.config.from_object(Config)
+app.config["UPLOAD_FOLDER"] = os.path.join(app.root_path, "static", "uploads", "floor_plans")
+app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024  # 5MB maximum upload limit
 
 # Connect SQLAlchemy
 db.init_app(app)
@@ -32,10 +35,11 @@ def load_user(user_id):
     return db.session.get(User, int(user_id))
 
 
-# Register authentication routes
+# Register blueprints
 app.register_blueprint(auth_bp)
 app.register_blueprint(student_bp)
 app.register_blueprint(admin_bp)
+app.register_blueprint(visitor_bp)
 
 @app.route("/")
 def home():

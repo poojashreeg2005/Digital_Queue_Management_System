@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}Visitor Token {{ token.token_code }} | Canara Engineering College{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/visitor.css') }}">
+
+<div class="page" style="padding: 30px 20px; display:block; min-height:85vh; background:var(--background);">
+
+    <!-- INSTITUTION WATERMARK BANNER -->
+    <div class="demo-badge-banner" style="max-width:620px; margin:0 auto 20px;">
+        <span>🏛️</span>
+        <div>
+            <strong>Canara Engineering College, Benjanapadavu</strong> — 
+            <span>Official Digital Visitor Pass. <em>[Demonstration Data Mode]</em></span>
+        </div>
+    </div>
+
+    <!-- DIGITAL TOKEN PASS CONTAINER -->
+    <div class="token-pass-card" id="visitor-pass-container" data-tracking-token="{{ token.tracking_token }}">
+
+        <!-- PASS HEADER -->
+        <div class="token-pass-header">
+            <span style="font-size:11px; font-weight:800; letter-spacing:1px; text-transform:uppercase; background:rgba(255,255,255,0.2); padding:4px 12px; border-radius:20px; display:inline-block; margin-bottom:8px;">
+                CANARA CAMPUS VISITOR PASS
+            </span>
+
+            <div class="token-pass-code" id="pass-token-code">
+                {{ token.token_code }}
+            </div>
+
+            <div style="display:flex; justify-content:center; align-items:center; gap:10px; margin-top:8px;">
+                <span id="pass-status-badge" class="badge-status badge-{{ token.status.lower() }}" style="font-size:12px; padding:5px 14px;">
+                    {{ token.status|upper }}
+                </span>
+                <span class="live-pulse-badge">
+                    <span class="live-pulse-dot"></span> Live Tracking
+                </span>
+            </div>
+        </div>
+
+        <!-- PASS BODY -->
+        <div class="token-pass-body">
+
+            <!-- CALLING ALERT BANNER (Dynamically shown/updated via JS if called) -->
+            <div id="pass-action-banner" {% if token.status != 'called' and token.status != 'declined' and token.status != 'completed' %}style="display:none;"{% endif %}>
+                {% if token.status == 'called' %}
+                    <div style="background:#eaf8f0; border:2px solid #16865a; color:#16865a; padding:16px; border-radius:12px; margin-bottom:20px; text-align:center;">
+                        <h3 style="margin:0 0 6px; font-size:18px;">🔔 YOUR TOKEN IS NOW BEING CALLED!</h3>
+                        <p style="margin:0; font-size:14px;">Please proceed immediately to <strong>{{ counter.name if counter else 'Assigned Counter' }}</strong> in <strong>{{ department.building or 'Administrative Block' }}</strong>.</p>
+                    </div>
+                {% elif token.status == 'declined' %}
+                    <div style="background:#fff0f2; border:1px solid #ffd9de; color:#d94b61; padding:14px; border-radius:12px; margin-bottom:20px; text-align:center;">
+                        <p style="margin:0; font-weight:bold;">This token was declined: {{ token.decline_reason or 'Please visit reception desk for guidance.' }}</p>
+                    </div>
+                {% elif token.status == 'completed' %}
+                    <div style="background:#f7f6fc; border:1px solid #d1ceeb; color:#49348e; padding:14px; border-radius:12px; margin-bottom:20px; text-align:center;">
+                        <p style="margin:0; font-weight:bold;">✓ Service Completed. Thank you for visiting Canara Engineering College!</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- KEY QUEUE METRICS GRID -->
+            <div class="pass-meta-grid">
+                <div class="pass-meta-item">
+                    <small>Your Queue Position</small>
+                    <strong id="pass-queue-position" style="font-size:22px; color:var(--primary-dark);">
+                        {% if token.status == 'approved' and metrics.queue_position %}
+                            #{{ metrics.queue_position }}
+                        {% elif token.status == 'called' %}
+                            NOW SERVING
+                        {% elif token.status == 'completed' %}
+                            Completed
+                        {% else %}
+                            Awaiting Lineup
+                        {% endif %}
+                    </strong>
+                    <div id="pass-people-ahead" style="font-size:11px; color:var(--muted); margin-top:2px;">
+                        {% if token.status == 'approved' and metrics.queue_position %}
+                            {{ metrics.people_ahead }} ahead in queue
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="pass-meta-item">
+                    <small>Estimated Waiting Time</small>
+                    <strong id="pass-wait-time" style="font-size:16px;">
+                        {{ wait_info.label }}
+                    </strong>
+                    <div style="font-size:10px; color:var(--muted); margin-top:2px;">
+                        <em>Calculation: Standard Queue Heuristic</em>
+                    </div>
+                </div>
+
+                <div class="pass-meta-item">
+                    <small>Assigned Service Desk</small>
+                    <strong id="pass-counter-name">
+                        {{ counter.name if counter else "Awaiting Counter Assignment" }}
+                    </strong>
+                    <div id="pass-counter-location" style="font-size:11px; color:var(--muted); margin-top:2px;">
+                        {{ department.building or 'Admin Block' }} · {{ department.floor or 'Ground Floor' }}
+                        {% if counter and counter.room %} · {{ counter.room }}{% endif %}
+                    </div>
+                </div>
+
+                <div class="pass-meta-item">
+                    <small>Desk Active Status</small>
+                    <strong id="pass-serving-token" style="font-size:15px; color:#555;">
+                        {{ metrics.currently_serving or "Waiting to call" }}
+                    </strong>
+                    <div style="font-size:11px; color:var(--muted); margin-top:2px;">
+                        Currently serving at counter
+                    </div>
+                </div>
+            </div>
+
+            <!-- VISITOR DETAILS (PHONE MASKED FOR PRIVACY) -->
+            <div style="background:#ffffff; border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin-bottom:24px;">
+                <h4 style="margin:0 0 12px; font-size:14px; color:var(--navy); font-weight:700;">
+                    Visitor Identification & Purpose
+                </h4>
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; font-size:13px;">
+                    <div>
+                        <span style="color:var(--muted);">Visitor Name:</span>
+                        <strong style="color:var(--navy); margin-left:4px;">{{ token.visitor_name }}</strong>
+                    </div>
+                    <div>
+                        <span style="color:var(--muted);">Mobile:</span>
+                        <strong style="color:var(--navy); margin-left:4px;">{{ masked_phone }}</strong>
+                    </div>
+                    <div>
+                        <span style="color:var(--muted);">Visit Purpose:</span>
+                        <span style="color:var(--primary); font-weight:600; margin-left:4px;">
+                            {% if other_purpose_detail %}
+                                Other: {{ other_purpose_detail }}
+                            {% else %}
+                                {{ purpose.name }}
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div>
+                        <span style="color:var(--muted);">Visit Date:</span>
+                        <span style="color:var(--navy); margin-left:4px;">{{ token.visit_date.strftime('%d %b %Y') }}</span>
+                    </div>
+                    {% if token.priority != 'normal' %}
+                        <div style="grid-column:1 / -1;">
+                            <span style="color:var(--muted);">Assistance Requested:</span>
+                            <span style="background:#fff3cd; color:#856404; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:bold; margin-left:4px;">
+                                {{ token.priority|replace('_', ' ')|capitalize }}
+                                {% if token.priority_verified %}(Verified){% else %}(Awaiting Verification){% endif %}
+                            </span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- WALKING ROUTE & CAMPUS DIRECTIONS -->
+            <div style="background:#f9f9fd; border:1px solid var(--border-light); border-radius:12px; padding:16px 20px; margin-bottom:26px;">
+                <h4 style="margin:0 0 6px; font-size:13.5px; color:var(--navy);">
+                    🚶‍♂️ How to Reach the Service Desk
+                </h4>
+                <p style="margin:0 0 10px; font-size:12.5px; color:#555; line-height:1.5;">
+                    {{ department.directions or "Enter through Security Gate 1, proceed along the main boulevard to Administrative Block." }}
+                </p>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    {% if location %}
+                        <a href="{{ url_for('visitor.navigate', location_id=location.id) }}" 
+                           style="display:inline-flex; align-items:center; gap:5px; font-size:12px; color:var(--primary); font-weight:700; text-decoration:none;">
+                            🗺️ Open Interactive Campus Map & Floor Plan →
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('visitor.navigate') }}" 
+                           style="display:inline-flex; align-items:center; gap:5px; font-size:12px; color:var(--primary); font-weight:700; text-decoration:none;">
+                            🗺️ Open Campus Navigation Map →
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- REFRESH & NAVIGATION BUTTONS -->
+            <div style="display:flex; gap:10px; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+                <a href="{{ url_for('visitor.home') }}" style="color:var(--muted); font-size:13px; text-decoration:none;">
+                    ← Visitor Portal Home
+                </a>
+                <button type="button" onclick="location.reload();" 
+                        style="padding:10px 18px; background:#f0edff; border:1px solid var(--border); border-radius:9px; color:var(--primary-dark); font-weight:700; font-size:12px; cursor:pointer;">
+                    🔄 Refresh Now
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Auto-Polling Live Script -->
+<script src="{{ url_for('static', filename='js/visitor_queue.js') }}"></script>
+{% endblock %}

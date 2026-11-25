@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Campus Map Demo | QueueFlow AI{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/visitor.css') }}">
+
+<main class="page campus-demo-page">
+    <div class="visitor-stepper">
+        <a href="{{ url_for('visitor.home') }}" class="step-item">
+            <span class="step-num">1</span> Visitor Portal
+        </a>
+        <span class="step-separator">›</span>
+        <span class="step-item active" aria-current="page">
+            <span class="step-num">2</span> Campus Map Demo
+        </span>
+        <span class="step-separator">›</span>
+        <a href="{{ url_for('visitor.book_token') }}" class="step-item">
+            <span class="step-num">3</span> Book Token
+        </a>
+    </div>
+
+    <header class="campus-demo-header">
+        <div>
+            <span class="campus-demo-eyebrow">QUEUEFLOW AI · VISITOR NAVIGATION</span>
+            <h1>Campus Map</h1>
+            <p>Explore an illustrative campus directory and sample indoor layouts.</p>
+        </div>
+        <div class="campus-demo-warning">
+            DEMO CAMPUS MAP — Illustrative Layout, Not Actual Building Locations
+        </div>
+    </header>
+
+    {% if target_location %}
+        <p class="map-context-note" role="status">
+            Visitor navigation requested <strong>{{ target_location.name }}</strong>.
+            That configured location is not plotted here; all map markers and layouts below are separate fictional demonstration data.
+        </p>
+    {% endif %}
+
+    <div class="demo-map-layout">
+        <section class="map-card outdoor-map-card" aria-labelledby="outdoor-map-heading">
+            <div class="map-header demo-map-header">
+                <div>
+                    <h2 id="outdoor-map-heading" class="map-title">Outdoor map</h2>
+                    <p>OpenStreetMap tiles with illustrative building markers.</p>
+                </div>
+                <button type="button" class="map-action-button" id="show-full-campus">
+                    Full campus view
+                </button>
+            </div>
+
+            <div id="campus-map"
+                 data-default-lat="12.8987"
+                 data-default-lng="74.9845"
+                 data-default-zoom="16"
+                 aria-label="Illustrative campus map">
+            </div>
+            <div id="campus-map-error" class="map-error" role="alert" hidden></div>
+
+            <ul class="map-legend" aria-label="Map legend">
+                <li><span class="legend-marker entrance">↗</span> Entrance</li>
+                <li><span class="legend-marker department">D</span> Department</li>
+                <li><span class="legend-marker building">B</span> Academic / administration</li>
+                <li><span class="legend-marker facility">F</span> Facility</li>
+                <li><span class="legend-marker service">S</span> Visitor / student services</li>
+                <li><span class="legend-marker parking">P</span> Parking</li>
+            </ul>
+        </section>
+
+        <aside class="campus-side-panel">
+            <section class="content-card campus-directory" aria-labelledby="directory-heading">
+                <div class="campus-section-heading">
+                    <div>
+                        <h2 id="directory-heading">Campus directory</h2>
+                        <p>Search and select a location to focus its map marker.</p>
+                    </div>
+                    <span id="directory-count" class="directory-count"></span>
+                </div>
+                <label class="sr-only" for="campus-search">Search campus locations</label>
+                <input id="campus-search" class="campus-search" type="search"
+                       placeholder="Search buildings and services" autocomplete="off">
+                <ul id="campus-directory-results" class="campus-directory-results"
+                    aria-label="Campus locations" role="list">
+                    <li class="map-empty-state" role="status">Loading demonstration locations…</li>
+                </ul>
+            </section>
+
+            <section id="building-info" class="content-card building-info"
+                     aria-labelledby="building-info-heading" aria-live="polite">
+                <h2 id="building-info-heading">Building information</h2>
+                <p class="building-info-placeholder">Select a marker or directory result to view its description.</p>
+            </section>
+        </aside>
+    </div>
+
+    <section class="map-card indoor-demo-card" aria-labelledby="indoor-heading">
+        <div class="map-header indoor-demo-header">
+            <div>
+                <h2 id="indoor-heading" class="map-title">Indoor floor plans</h2>
+                <p>DEMO FLOOR PLANS — Illustrative layouts, not actual building plans.</p>
+            </div>
+            <div class="indoor-selectors">
+                <div class="indoor-select-field">
+                    <label for="indoor-building-select">Building</label>
+                    <select id="indoor-building-select" disabled>
+                        <option>Loading buildings…</option>
+                    </select>
+                </div>
+                <div class="indoor-select-field">
+                    <label for="indoor-floor-select">Floor</label>
+                    <select id="indoor-floor-select" disabled>
+                        <option>Select a building first</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="indoor-plan-content">
+            <div id="indoor-plan-label" class="indoor-plan-label" aria-live="polite"></div>
+            <div id="indoor-floor-plan" class="floorplan-wrapper" role="group"
+                 aria-label="Illustrative indoor floor plan">
+                <p class="map-empty-state" role="status">Indoor demonstration plans are loading…</p>
+            </div>
+            <section id="room-info" class="room-info" aria-live="polite" aria-atomic="true"
+                     aria-label="Selected room information">
+                <p class="building-info-placeholder">Select a room marker to view its description and illustrative text directions.</p>
+            </section>
+        </div>
+    </section>
+
+    <div class="campus-demo-footer">
+        These map positions and indoor layouts are fictional demonstration data. They are not verified for real campus navigation.
+    </div>
+</main>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="{{ url_for('static', filename='js/campus_demo_data.js') }}"></script>
+<script src="{{ url_for('static', filename='js/visitor_nav.js') }}"></script>
+{% endblock %}
