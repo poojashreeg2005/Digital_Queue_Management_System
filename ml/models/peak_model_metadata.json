@@ -1,0 +1,16 @@
+{
+  "mae": 2.199,
+  "rmse": 2.768,
+  "r2": 0.829,
+  "training_rows": 2419,
+  "test_rows": 605,
+  "is_simulated": true,
+  "model": "RandomForestRegressor",
+  "features": [
+    "day_of_week",
+    "time_slot",
+    "department",
+    "previous_queue_workload",
+    "active_counters"
+  ]
+}
